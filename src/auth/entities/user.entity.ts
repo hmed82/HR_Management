@@ -11,9 +11,6 @@ export class User {
     @Column()
     password: string; // store hashed password
 
-    @Column({ default: 'user' })
-    role: string;
-
     @CreateDateColumn()
     createdAt: Date;
 }
