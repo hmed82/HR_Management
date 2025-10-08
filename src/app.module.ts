@@ -5,6 +5,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AuthModule } from './auth/auth.module';
 import * as Joi from 'joi';
+import { join } from 'path';
 
 
 @Module({
@@ -32,21 +33,40 @@ import * as Joi from 'joi';
         BCRYPT_SALT_ROUNDS: Joi.number().min(4).max(31).default(10),
       }),
     }),
-    TypeOrmModule.forRootAsync({
-      imports: [ConfigModule],
-      useFactory: (configService: ConfigService) => ({
-        type: configService.get<string>('DB_TYPE') as any, // Adjust 'as any' if you know the specific DB type (e.g., 'mysql')
-        host: configService.get<string>('DB_HOST') ?? 'localhost',
-        port: Number(configService.get<number>('DB_PORT') ?? 3306),
-        username: configService.get<string>('DB_USERNAME'),
-        password: configService.get<string>('DB_PASSWORD'),
-        database: configService.get<string>('DB_NAME'),
-        autoLoadEntities: true,
-        entities: [__dirname + '/**/*.entity{.ts,.js}'],
-        synchronize: configService.get<boolean>('DB_SYNCHRONIZE') ?? false, // Default to false for safety
-      }),
-      inject: [ConfigService],
+
+    // ************************** For MySQL (production) **************************
+    // ************************** change entities back too **************************
+
+    // TypeOrmModule.forRootAsync({
+    //   imports: [ConfigModule],
+    //   useFactory: (configService: ConfigService) => ({
+    //     type: configService.get<string>('DB_TYPE') as any, // Adjust 'as any' if you know the specific DB type (e.g., 'mysql')
+    //     host: configService.get<string>('DB_HOST') ?? 'localhost',
+    //     port: Number(configService.get<number>('DB_PORT') ?? 3306),
+    //     username: configService.get<string>('DB_USERNAME'),
+    //     password: configService.get<string>('DB_PASSWORD'),
+    //     database: configService.get<string>('DB_NAME'),
+    //     autoLoadEntities: true,
+    //     entities: [__dirname + '/**/*.entity{.ts,.js}'],
+    //     synchronize: configService.get<boolean>('DB_SYNCHRONIZE') ?? false, // Default to false for safety
+    //   }),
+    //   inject: [ConfigService],
+    // }),
+
+
+
+    // ************************** For SQLite (development) **************************
+    TypeOrmModule.forRoot({
+      type: 'sqlite',
+      // database: 'db.sqlite',
+      database: join(__dirname, '..', 'data', 'db.sqlite'), // Store in a data directory
+      entities: [__dirname + '/**/*.entity{.ts,.js}'],
+      synchronize: true,
+      logging: true,
     }),
+    // ************************** end SQLite config **************************
+
+
     AuthModule
   ],
   controllers: [AppController],

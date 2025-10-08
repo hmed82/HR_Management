@@ -1,4 +1,4 @@
-import { ConflictException, NotFoundException, Injectable } from '@nestjs/common';
+import { ConflictException, NotFoundException, Injectable, UnauthorizedException } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { ConfigService } from '@nestjs/config';
 import { User } from '@/auth/entities/user.entity';
@@ -38,6 +38,7 @@ export class AuthService {
         if (existingUser) {
             throw new ConflictException('Email already in use');
         }
+
         const hashedPassword = await this.hashPassword(password);
         const user = this.usersRepo.create({
             email,
@@ -50,7 +51,8 @@ export class AuthService {
     async login(loginDto: LoginDto): Promise<{ accessToken: string } | string> {
         const user = await this.usersRepo.findOne({ where: { email: loginDto.email } });
         if (!user || !(await bcrypt.compare(loginDto.password, user.password))) {
-            throw new Error('Invalid credentials');
+            throw new UnauthorizedException('Invalid credentials');
+
         }
         // const accessToken = this.generateAccessToken(user);
         // return { accessToken };
