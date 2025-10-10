@@ -1,4 +1,4 @@
-import { Exclude } from 'class-transformer';
+// import { Exclude } from 'class-transformer';
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn } from 'typeorm';
 import { UserRole } from '../enums/user-role.enum';
 
@@ -10,12 +10,13 @@ export class User {
     @Column({ unique: true })
     email: string;
 
-    @Exclude()
+    // @Exclude()
     @Column()
     password: string;
 
     @Column({ nullable: true })
     name?: string;
+
 
     // ********************* for prod when i swich back to mysql or postgres *********************
 
@@ -39,7 +40,7 @@ export class User {
     })
     role: UserRole;
 
-    @UpdateDateColumn({
+    @CreateDateColumn({
         type: 'datetime',  // Changed from timestamp to datetime for SQLite
     })
     createdAt: Date;

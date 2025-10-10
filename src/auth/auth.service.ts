@@ -48,7 +48,8 @@ export class AuthService {
         return await this.usersRepo.save(user);
     }
 
-    async login(loginDto: LoginDto): Promise<{ accessToken: string } | string> {
+    // async login(loginDto: LoginDto): Promise<{ accessToken: string }> {    //********prod//********/
+    async login(loginDto: LoginDto): Promise<{ accessToken: string } | string> { //********dev before making jwt logic********/
         const user = await this.usersRepo.findOne({ where: { email: loginDto.email } });
         if (!user || !(await bcrypt.compare(loginDto.password, user.password))) {
             throw new UnauthorizedException('Invalid credentials');
@@ -80,6 +81,12 @@ export class AuthService {
 
     async updateUser(id: number, updateUserDto: UpdateUserDto): Promise<User> {
         const user = await this.findById(id);
+        if (!user) {
+            throw new NotFoundException('User not found');
+        }
+        if (updateUserDto.password) {
+            updateUserDto.password = await this.hashPassword(updateUserDto.password);
+        }
         Object.assign(user, updateUserDto);
         return this.usersRepo.save(user);
     }
