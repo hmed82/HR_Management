@@ -3,7 +3,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { AuthModule } from './auth/auth.module';
+import { UserModule } from './user/user.module';
 import * as Joi from 'joi';
 import { join } from 'path';
 
@@ -67,7 +67,7 @@ import { join } from 'path';
     // ************************** end SQLite config **************************
 
 
-    AuthModule
+    UserModule
   ],
   controllers: [AppController],
   providers: [AppService],
