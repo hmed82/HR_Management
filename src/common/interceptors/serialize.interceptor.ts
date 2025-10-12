@@ -8,8 +8,7 @@ import {
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { plainToInstance } from 'class-transformer';
-import { ClassType } from '@/common/interfaces/class-type.interface';// updated import path bacause of the new typescript config :    path mapping in tsconfig.json
-// import { ClassType } from '../interfaces/class-type.interface'; // old import path
+import { ClassType } from '@/common/interfaces/class-type.interface';
 
 export function Serialize(dto: ClassType) {
     if (typeof dto !== 'function') {

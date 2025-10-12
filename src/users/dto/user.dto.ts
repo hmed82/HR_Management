@@ -1,8 +1,9 @@
 import { Expose } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
-import { UserRole } from '@/user/enums/user-role.enum';
+import { UserRole } from '@/users/enums/user-role.enum';
 
 export class UserDto {
+
     @ApiProperty({
         example: 1,
         description: 'User unique identifier',
@@ -24,6 +25,14 @@ export class UserDto {
     })
     @Expose()
     name?: string;
+
+    @ApiProperty({
+        example: true,
+        description: 'Is user Active',
+        required: false,
+    })
+    @Expose()
+    isActive: boolean;
 
     @ApiProperty({
         example: UserRole.USER,

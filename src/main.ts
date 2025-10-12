@@ -15,7 +15,8 @@ async function bootstrap() {
     .setDescription('REST API for managing employees, departments, leave requests, payroll, and authentication.')
     .setVersion('1.0')
     .addBearerAuth() // for JWT auth in Swagger UI
-    .addTag('Users', 'Authentication & authorization and User CRUD')
+    .addTag('Authentication', 'Authentication & authorization')
+    .addTag('Users', 'User CRUD')
     .addTag('Departments', 'Operations related to departments')
     .addTag('Employees', 'Operations related to employee records')
     .build();

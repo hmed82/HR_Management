@@ -1,6 +1,6 @@
-// import { Exclude } from 'class-transformer';
+import { Exclude } from 'class-transformer';
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn } from 'typeorm';
-import { UserRole } from '@/user/enums/user-role.enum';
+import { UserRole } from '@/users/enums/user-role.enum';
 
 @Entity('users') // good practice: plural table name
 export class User {
@@ -10,12 +10,16 @@ export class User {
     @Column({ unique: true })
     email: string;
 
-    // @Exclude()
+    @Exclude()
     @Column()
     password: string;
 
     @Column({ nullable: true })
     name?: string;
+
+    @Column({ default: true })
+    isActive: boolean;
+
 
 
     // ********************* for prod when i swich back to mysql or postgres *********************
