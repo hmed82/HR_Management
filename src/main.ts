@@ -6,13 +6,14 @@ import { ValidationPipe } from '@nestjs/common';
 // import { ClassSerializerInterceptor } from '@nestjs/common';
 // import { Reflector } from '@nestjs/core';
 
-
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const configService = app.get(ConfigService);
   const config = new DocumentBuilder()
     .setTitle('HR Management API')
-    .setDescription('REST API for managing employees, departments, leave requests, payroll, and authentication.')
+    .setDescription(
+      'REST API for managing employees, departments, leave requests, payroll, and authentication.',
+    )
     .setVersion('1.0')
     .addBearerAuth() // for JWT auth in Swagger UI
     .addTag('Authentication', 'Authentication & authorization')
@@ -24,14 +25,16 @@ async function bootstrap() {
   const documentFactory = () => SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, documentFactory);
 
-  app.useGlobalPipes(new ValidationPipe({
-    whitelist: true,
-    forbidNonWhitelisted: true,
-    transform: true,
-    transformOptions: {
-      enableImplicitConversion: true,
-    },
-  }));
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
+      transformOptions: {
+        enableImplicitConversion: true,
+      },
+    }),
+  );
   // app.useGlobalInterceptors(new ClassSerializerInterceptor(app.get(Reflector)));//global interceptor i used before createing my own SerializeInterceptor
 
   // Enable CORS with options from environment variables or defaults
@@ -44,7 +47,8 @@ async function bootstrap() {
   //   maxAge: Number(configService.get<number>('CORS_MAX_AGE')) ?? 3600,
   // });
 
-  const port = Number(configService.get<number>('PORT')) ?? 3000;
+  const hardCodedPort: number = 3000;
+  const port = Number(configService.get<number>('PORT')) ?? hardCodedPort;
 
   await app.listen(port);
   console.log(`Application is running on: http://localhost:${port}`);

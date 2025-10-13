@@ -23,17 +23,18 @@ import { HashUtil } from '@/common/utils/hash.util';
       useFactory: async (configService: ConfigService) => {
         const secret = configService.get<string>('JWT_SECRET');
         if (!secret) {
-          throw new Error('JWT_SECRET must be defined in environment variables');
+          throw new Error(
+            'JWT_SECRET must be defined in environment variables',
+          );
         }
         return {
           secret,
           signOptions: {
-            expiresIn: configService.get('JWT_EXPIRES_IN', '3600s')
+            expiresIn: configService.get('JWT_EXPIRES_IN', '3600s'),
           },
         };
       },
     }),
-
   ],
   controllers: [AuthController],
   providers: [

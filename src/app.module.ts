@@ -2,12 +2,12 @@ import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { ConfigModule, ConfigService } from '@nestjs/config';
+import { ConfigModule } from '@nestjs/config';
+// import { ConfigService } from '@nestjs/common';
 import { UsersModule } from './users/users.module';
 import * as Joi from 'joi';
 import { join } from 'path';
 import { AuthModule } from './auth/auth.module';
-
 
 @Module({
   imports: [
@@ -54,8 +54,6 @@ import { AuthModule } from './auth/auth.module';
     //   inject: [ConfigService],
     // }),
 
-
-
     // ************************** For SQLite (development) **************************
     TypeOrmModule.forRoot({
       type: 'sqlite',
@@ -67,11 +65,10 @@ import { AuthModule } from './auth/auth.module';
     }),
     // ************************** end SQLite config **************************
 
-
     UsersModule,
-    AuthModule
+    AuthModule,
   ],
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule { }
+export class AppModule {}
