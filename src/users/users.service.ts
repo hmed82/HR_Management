@@ -38,7 +38,6 @@ export class UsersService {
 
     async findByEmail(email: string): Promise<User | null> {
         const user = await this.usersRepo.findOne({ where: { email } });
-        console.log(user)
         return user;
     }
 
@@ -59,12 +58,12 @@ export class UsersService {
         return this.usersRepo.save(user);
     }
 
-    async remove(id: number): Promise<void> {
+    async remove(id: number): Promise<string> {
         const user = await this.findById(id);
         if (!user) {
             throw new NotFoundException('User not found');
         }
         await this.usersRepo.remove(user);
+        return 'User successfully deleted'
     }
 }
-

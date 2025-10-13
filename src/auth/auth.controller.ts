@@ -5,14 +5,17 @@ import { LoginDto } from '@/auth/dto/login.dto';
 import { CreateUserDto } from '@/users/dto/create-user.dto';
 import { UserDto } from '@/users/dto/user.dto';
 import { Public } from '@/auth/decorators/public.decorator';
-import { JwtAuthGuard } from '@/auth/guards/jwt-auth.guard';
-import { CurrentUser } from '@/auth/decorators/current-user.decorator';
-import { User } from '@/users/entities/user.entity';
+import { CurrentUser } from '@/users/decorators/current-user.decorator';
+import type { JwtUser } from '@/users/decorators/current-user.decorator';
+import { UsersService } from '@/users/users.service';
 
 @ApiTags('Authentication')
 @Controller('auth')
 export class AuthController {
-    constructor(private readonly authService: AuthService) { }
+    constructor(
+        private readonly authService: AuthService,
+        private readonly usersService: UsersService
+    ) { }
 
     // Public routes - no authentication required
     @Public()
@@ -36,13 +39,14 @@ export class AuthController {
     }
 
     // Current user can access their own info
-    @UseGuards(JwtAuthGuard)
+    // @UseGuards(JwtAuthGuard) No needed - global guard handles it in auth module
     @Get('me')
     @ApiBearerAuth()
     @ApiOperation({ summary: 'Get current user information' })
     @ApiOkResponse({ description: 'User information retrieved successfully', type: UserDto })
     @ApiUnauthorizedResponse({ description: 'Not authenticated' })
-    async getMe(@CurrentUser() user: User) {
-        return { user };
+    async getMe(@CurrentUser() user: JwtUser) {
+        return this.usersService.findById(user.id)
+        // return { user };
     }
 }

@@ -10,6 +10,7 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
     }
 
     canActivate(context: ExecutionContext) {
+        // Check if route is marked as public
         const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
             context.getHandler(),
             context.getClass(),
@@ -19,15 +20,19 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
             return true;
         }
 
+        // Otherwise, use passport JWT strategy
         return super.canActivate(context);
     }
 
     handleRequest(err: any, user: any, info: any) {
+        if (info?.name === 'TokenExpiredError') {
+            throw new UnauthorizedException('Token has expired');
+        }
+        if (info?.name === 'JsonWebTokenError') {
+            throw new UnauthorizedException('Invalid token');
+        }
         if (err || !user) {
-            console.log('*********************************************')
-            console.log(user)
-            console.log('*********************************************')
-            // throw err || new UnauthorizedException('Invalid or expired token');
+            throw err || new UnauthorizedException('Authentication failed');
         }
         return user;
     }

@@ -5,6 +5,7 @@ import { LoginDto } from './dto/login.dto';
 import { HashUtil } from '../common/utils/hash.util';
 import { CreateUserDto } from '../users/dto/create-user.dto';
 import { User } from '@/users/entities/user.entity'
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class AuthService {
@@ -12,6 +13,7 @@ export class AuthService {
         private usersService: UsersService,
         private jwtService: JwtService,
         private hashUtil: HashUtil,
+        private configService: ConfigService //remoove after tests of jwt
     ) { }
 
     async register(createUserDto: CreateUserDto) {
@@ -49,7 +51,6 @@ export class AuthService {
             },
         };
     }
-
     // async logout() {
     //     // With stateless JWT, logout is handled client-side
     //     // (you can implement token blacklist if needed)

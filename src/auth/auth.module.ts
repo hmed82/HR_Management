@@ -20,17 +20,19 @@ import { HashUtil } from '@/common/utils/hash.util';
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
-      useFactory: async (configService: ConfigService) => ({
-        secret: 'configService.get<string>(JWT_SECRET) || your-secret-key',
-        signOptions: { expiresIn: configService.get('JWT_EXPIRES_IN', '1d') },
-      }),
+      useFactory: async (configService: ConfigService) => {
+        const secret = configService.get<string>('JWT_SECRET');
+        if (!secret) {
+          throw new Error('JWT_SECRET must be defined in environment variables');
+        }
+        return {
+          secret,
+          signOptions: {
+            expiresIn: configService.get('JWT_EXPIRES_IN', '3600s')
+          },
+        };
+      },
     }),
-
-    // JwtModule.register({
-    //   global: true,
-    //   secret: 'jwtConstants.secret',
-    //   signOptions: { expiresIn: '60s' },
-    // }),
 
   ],
   controllers: [AuthController],
