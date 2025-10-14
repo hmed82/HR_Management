@@ -12,7 +12,7 @@ export class AuthService {
     private usersService: UsersService,
     private jwtService: JwtService,
     private hashUtil: HashUtil,
-  ) { }
+  ) {}
 
   async register(createUserDto: CreateUserDto) {
     const user = await this.usersService.create(createUserDto);

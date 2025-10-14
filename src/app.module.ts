@@ -8,6 +8,7 @@ import { UsersModule } from './users/users.module';
 import * as Joi from 'joi';
 import { join } from 'path';
 import { AuthModule } from './auth/auth.module';
+import { DepartmentsModule } from './departments/departments.module';
 
 @Module({
   imports: [
@@ -67,6 +68,7 @@ import { AuthModule } from './auth/auth.module';
 
     UsersModule,
     AuthModule,
+    DepartmentsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
