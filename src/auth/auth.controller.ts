@@ -17,6 +17,7 @@ import { Public } from '@/auth/decorators/public.decorator';
 import { CurrentUser } from '@/users/decorators/current-user.decorator';
 import type { JwtUser } from '@/users/decorators/current-user.decorator';
 import { UsersService } from '@/users/users.service';
+import { Serialize } from '@/common/interceptors/serialize.interceptor';
 
 @ApiTags('Authentication')
 @Controller('auth')
@@ -24,7 +25,7 @@ export class AuthController {
   constructor(
     private readonly authService: AuthService,
     private readonly usersService: UsersService,
-  ) {}
+  ) { }
 
   // Public routes - no authentication required
   @Public()
@@ -53,6 +54,7 @@ export class AuthController {
 
   // Current user can access their own info
   // @UseGuards(JwtAuthGuard) No needed - global guard handles it in auth module
+  @Serialize(UserDto)
   @Get('me')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get current user information' })
@@ -63,6 +65,5 @@ export class AuthController {
   @ApiUnauthorizedResponse({ description: 'Not authenticated' })
   async getMe(@CurrentUser() user: JwtUser) {
     return this.usersService.findById(user.id);
-    // return { user };
   }
 }

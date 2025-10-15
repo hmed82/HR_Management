@@ -39,4 +39,13 @@ export class DepartmentDto {
   })
   @Expose()
   updatedAt: Date;
+
+  @ApiProperty({
+    example: 1,
+    description: 'How many Employees in the department',
+    required: false,
+  })
+  @Expose()
+  employeeCount?: number
+
 }

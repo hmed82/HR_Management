@@ -31,12 +31,11 @@ import { DepartmentDto } from '@/departments/dto/department.dto';
 
 @ApiTags('Departments')
 @ApiBearerAuth()
-@Roles(UserRole.ADMIN)
 @Controller('departments')
-@Serialize(DepartmentDto)
 export class DepartmentsController {
   constructor(private readonly departmentsService: DepartmentsService) { }
 
+  @Serialize(DepartmentDto)
   @ApiOperation({ summary: 'Create a new department (Admin only)' })
   @ApiResponse({
     status: 201,
@@ -47,31 +46,48 @@ export class DepartmentsController {
   @ApiConflictResponse({ description: 'Department name already exists' })
   @ApiUnauthorizedResponse({ description: 'Not authenticated' })
   @ApiForbiddenResponse({ description: 'Admin access required' })
+  @Roles(UserRole.ADMIN)
   @Post()
   create(@Body() createDepartmentDto: CreateDepartmentDto) {
     return this.departmentsService.create(createDepartmentDto);
   }
 
-  @ApiOperation({ summary: 'Get all departments (Admin only)' })
+  @Serialize(DepartmentDto)
+  @ApiOperation({ summary: 'Get all departments' })
   @ApiOkResponse({
     description: 'Departments retrieved successfully',
     type: [DepartmentDto],
   })
   @ApiUnauthorizedResponse({ description: 'Not authenticated' })
-  @ApiForbiddenResponse({ description: 'Admin access required' })
   @Get()
   findAll() {
     return this.departmentsService.findAll();
   }
 
-  @ApiOperation({ summary: 'Get department by ID (Admin only)' })
+  @Serialize(DepartmentDto)
+  @ApiOperation({ summary: 'Get all departments with employee count' })
+  @ApiOkResponse({
+    description: 'Departments with employee count retrieved successfully',
+  })
+  @ApiOkResponse({
+    description: 'Departments with employee count retrieved successfully',
+    type: [DepartmentDto],
+  })
+  @ApiUnauthorizedResponse({ description: 'Not authenticated' })
+  @Get('employee-count')
+  async getAllDepartmentsWithEmployeeCount() {
+    return this.departmentsService.findAllWithEmployeeCount()
+  }
+
+
+  @Serialize(DepartmentDto)
+  @ApiOperation({ summary: 'Get department by ID' })
   @ApiOkResponse({
     description: 'Department found successfully',
     type: DepartmentDto,
   })
   @ApiNotFoundResponse({ description: 'Department not found' })
   @ApiUnauthorizedResponse({ description: 'Not authenticated' })
-  @ApiForbiddenResponse({ description: 'Admin access required' })
   @Get(':id')
   async findOne(@Param('id', ParseIntPipe) id: number) {
     const department = await this.departmentsService.findById(id);
@@ -81,6 +97,29 @@ export class DepartmentsController {
     return department;
   }
 
+  @ApiOperation({ summary: 'Get department with all employees' })
+  @ApiOkResponse({
+    description: 'Department with employees retrieved successfully',
+  })
+  @ApiNotFoundResponse({ description: 'Department not found' })
+  @ApiUnauthorizedResponse({ description: 'Not authenticated' })
+  @Get(':id/employees')
+  async getDepartmentWithEmployees(@Param('id', ParseIntPipe) id: number) {
+    return this.departmentsService.findOneWithEmployees(id);
+  }
+
+  @ApiOperation({ summary: 'Get department with active employees only' })
+  @ApiOkResponse({
+    description: 'Department with active employees retrieved successfully',
+  })
+  @ApiNotFoundResponse({ description: 'Department not found' })
+  @ApiUnauthorizedResponse({ description: 'Not authenticated' })
+  @Get(':id/active-employees')
+  async getDepartmentWithActiveEmployees(@Param('id', ParseIntPipe) id: number) {
+    return this.departmentsService.findOneWithActiveEmployees(id);
+  }
+
+  @Serialize(DepartmentDto)
   @ApiOperation({ summary: 'Update department (Admin only)' })
   @ApiOkResponse({
     description: 'Department successfully updated',
@@ -88,8 +127,10 @@ export class DepartmentsController {
   })
   @ApiNotFoundResponse({ description: 'Department not found' })
   @ApiBadRequestResponse({ description: 'Invalid input data' })
+  @ApiConflictResponse({ description: 'Department name already exists' })
   @ApiUnauthorizedResponse({ description: 'Not authenticated' })
   @ApiForbiddenResponse({ description: 'Admin access required' })
+  @Roles(UserRole.ADMIN)
   @Patch(':id')
   update(
     @Param('id', ParseIntPipe) id: number,
@@ -106,6 +147,7 @@ export class DepartmentsController {
   })
   @ApiUnauthorizedResponse({ description: 'Not authenticated' })
   @ApiForbiddenResponse({ description: 'Admin access required' })
+  @Roles(UserRole.ADMIN)
   @Delete(':id')
   remove(@Param('id', ParseIntPipe) id: number) {
     return this.departmentsService.remove(id);
