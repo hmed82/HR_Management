@@ -55,7 +55,6 @@ export class EmployeesController {
     return this.employeesService.create(createEmployeeDto);
   }
 
-  // ****************************** this doesn't work for now ****************************** */
   @ApiOperation({ summary: 'Get employee statistics (Admin only)' })
   @ApiOkResponse({
     description: 'Employee statistics retrieved successfully',
@@ -88,7 +87,6 @@ export class EmployeesController {
     return this.employeesService.getStatistics();
   }
 
-  // ****************************** this doesn't work for now ****************************** */
   @ApiOperation({ summary: 'Get all employees with pagination' })
   @ApiOkResponse({
     description: 'Employees retrieved successfully',
