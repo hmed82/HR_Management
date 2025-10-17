@@ -5,6 +5,7 @@ import { LoginDto } from './dto/login.dto';
 import { HashUtil } from '../common/utils/hash.util';
 import { CreateUserDto } from '../users/dto/create-user.dto';
 import { User } from '@/users/entities/user.entity';
+import { AuthResponse } from '@/auth/interfaces/auth-response.interface';
 
 @Injectable()
 export class AuthService {
@@ -12,14 +13,14 @@ export class AuthService {
     private usersService: UsersService,
     private jwtService: JwtService,
     private hashUtil: HashUtil,
-  ) {}
+  ) { }
 
-  async register(createUserDto: CreateUserDto) {
+  async register(createUserDto: CreateUserDto): Promise<AuthResponse> {
     const user = await this.usersService.create(createUserDto);
     return this.generateToken(user);
   }
 
-  async login(loginDto: LoginDto) {
+  async login(loginDto: LoginDto): Promise<AuthResponse> {
     const user = await this.usersService.findByEmail(loginDto.email);
 
     if (!user) {
@@ -38,7 +39,7 @@ export class AuthService {
     return this.generateToken(user);
   }
 
-  private generateToken(user: User) {
+  private generateToken(user: User): AuthResponse {
     const payload = { sub: user.id, role: user.role };
     return {
       access_token: this.jwtService.sign(payload),
@@ -49,10 +50,12 @@ export class AuthService {
       },
     };
   }
-  // async logout() {
-  //     // With stateless JWT, logout is handled client-side
-  //     // (you can implement token blacklist if needed)
-  //     // what i will probably do is to have a refresh token and store it in the user table and delete it on logout and blacklist the access token for its remaining time to live
-  //     return { message: 'Logged out successfully' };
+
+  // async logout(): Promise<{ message: string }> {
+  //   // With stateless JWT, logout is handled client-side
+  //   // (you can implement token blacklist if needed)
+  //   // what i will probably do is to have a refresh token and store it in the user table 
+  //   // and delete it on logout and blacklist the access token for its remaining time to live
+  //   return { message: 'Logged out successfully' };
   // }
 }

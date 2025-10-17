@@ -9,6 +9,7 @@ import { UpdateUserDto } from '@/users/dto/update-user.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { HashUtil } from '@/common/utils/hash.util';
+import { PaginatedResult } from '@/common/interfaces/paginated-result.interface';
 
 @Injectable()
 export class UsersService {
@@ -16,12 +17,12 @@ export class UsersService {
     @InjectRepository(User)
     private readonly usersRepo: Repository<User>,
     private hashUtil: HashUtil,
-  ) {}
+  ) { }
 
   async create(createUserDto: CreateUserDto): Promise<User> {
     const { email, password, ...rest } = createUserDto;
 
-    const existingUser = await this.findByEmail(email);
+    const existingUser = await this.usersRepo.findOne({ where: { email } });
     if (existingUser) {
       throw new ConflictException('Email already in use');
     }
@@ -35,8 +36,24 @@ export class UsersService {
     return await this.usersRepo.save(user);
   }
 
-  async findAll(): Promise<User[]> {
-    return this.usersRepo.find();
+  async findAll(page: number, limit: number): Promise<PaginatedResult<User>> {
+    // findAndCount() returns array: [items, total count]
+    const [items, total] = await this.usersRepo.findAndCount({
+      skip: (page - 1) * limit, // OFFSET: how many records to skip
+      take: limit,
+    });
+
+    // Return paginated response with metadata
+    return {
+      data: items,
+      meta: {
+        totalItems: total,
+        itemCount: items.length,
+        itemsPerPage: limit,
+        totalPages: Math.ceil(total / limit),
+        currentPage: page,
+      },
+    };
   }
 
   async findByEmail(email: string): Promise<User | null> {
@@ -50,24 +67,28 @@ export class UsersService {
   }
 
   async update(id: number, updateUserDto: UpdateUserDto): Promise<User> {
-    const user = await this.findById(id);
+    const user = await this.usersRepo.findOne({ where: { id } });
     if (!user) {
       throw new NotFoundException('User not found');
     }
+
+    // Hash password if provided
     if (updateUserDto.password) {
       updateUserDto.password = await this.hashUtil.hashPassword(
         updateUserDto.password,
       );
     }
+
     Object.assign(user, updateUserDto);
     return this.usersRepo.save(user);
   }
 
   async remove(id: number): Promise<string> {
-    const user = await this.findById(id);
+    const user = await this.usersRepo.findOne({ where: { id } });
     if (!user) {
       throw new NotFoundException('User not found');
     }
+
     await this.usersRepo.remove(user);
     return 'User successfully deleted';
   }

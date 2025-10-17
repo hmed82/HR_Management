@@ -18,6 +18,8 @@ import { CurrentUser } from '@/users/decorators/current-user.decorator';
 import type { JwtUser } from '@/users/decorators/current-user.decorator';
 import { UsersService } from '@/users/users.service';
 import { Serialize } from '@/common/interceptors/serialize.interceptor';
+import { User } from '@/users/entities/user.entity';
+import { AuthResponse } from '@/auth/interfaces/auth-response.interface';
 
 @ApiTags('Authentication')
 @Controller('auth')
@@ -38,7 +40,7 @@ export class AuthController {
   })
   @ApiBadRequestResponse({ description: 'Invalid input data' })
   @ApiConflictResponse({ description: 'Email already in use' })
-  register(@Body() createUserDto: CreateUserDto) {
+  async register(@Body() createUserDto: CreateUserDto): Promise<AuthResponse> {
     return this.authService.register(createUserDto);
   }
 
@@ -48,12 +50,11 @@ export class AuthController {
   @ApiOkResponse({ description: 'User successfully logged in' })
   @ApiBadRequestResponse({ description: 'Invalid input data' })
   @ApiUnauthorizedResponse({ description: 'Invalid email or password' })
-  login(@Body() loginDto: LoginDto) {
+  async login(@Body() loginDto: LoginDto): Promise<AuthResponse> {
     return this.authService.login(loginDto);
   }
 
   // Current user can access their own info
-  // @UseGuards(JwtAuthGuard) No needed - global guard handles it in auth module
   @Serialize(UserDto)
   @Get('me')
   @ApiBearerAuth()
@@ -63,7 +64,7 @@ export class AuthController {
     type: UserDto,
   })
   @ApiUnauthorizedResponse({ description: 'Not authenticated' })
-  async getMe(@CurrentUser() user: JwtUser) {
+  async getMe(@CurrentUser() user: JwtUser): Promise<User | null> {
     return this.usersService.findById(user.id);
   }
 }

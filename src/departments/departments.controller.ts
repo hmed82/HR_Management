@@ -28,6 +28,7 @@ import { Roles } from '@/auth/decorators/roles.decorator';
 import { UserRole } from '@/users/enums/user-role.enum';
 import { Serialize } from '@/common/interceptors/serialize.interceptor';
 import { DepartmentDto } from '@/departments/dto/department.dto';
+import { Department } from '@/departments/entities/department.entity';
 
 @ApiTags('Departments')
 @ApiBearerAuth()
@@ -48,7 +49,7 @@ export class DepartmentsController {
   @ApiForbiddenResponse({ description: 'Admin access required' })
   @Roles(UserRole.ADMIN)
   @Post()
-  create(@Body() createDepartmentDto: CreateDepartmentDto) {
+  async create(@Body() createDepartmentDto: CreateDepartmentDto): Promise<Department> {
     return this.departmentsService.create(createDepartmentDto);
   }
 
@@ -60,7 +61,7 @@ export class DepartmentsController {
   })
   @ApiUnauthorizedResponse({ description: 'Not authenticated' })
   @Get()
-  findAll() {
+  async findAll(): Promise<Department[]> {
     return this.departmentsService.findAll();
   }
 
@@ -68,17 +69,13 @@ export class DepartmentsController {
   @ApiOperation({ summary: 'Get all departments with employee count' })
   @ApiOkResponse({
     description: 'Departments with employee count retrieved successfully',
-  })
-  @ApiOkResponse({
-    description: 'Departments with employee count retrieved successfully',
     type: [DepartmentDto],
   })
   @ApiUnauthorizedResponse({ description: 'Not authenticated' })
   @Get('employee-count')
-  async getAllDepartmentsWithEmployeeCount() {
-    return this.departmentsService.findAllWithEmployeeCount()
+  async getAllDepartmentsWithEmployeeCount(): Promise<Department[]> {
+    return this.departmentsService.findAllWithEmployeeCount();
   }
-
 
   @Serialize(DepartmentDto)
   @ApiOperation({ summary: 'Get department by ID' })
@@ -89,7 +86,7 @@ export class DepartmentsController {
   @ApiNotFoundResponse({ description: 'Department not found' })
   @ApiUnauthorizedResponse({ description: 'Not authenticated' })
   @Get(':id')
-  async findOne(@Param('id', ParseIntPipe) id: number) {
+  async findOne(@Param('id', ParseIntPipe) id: number): Promise<Department> {
     const department = await this.departmentsService.findById(id);
     if (!department) {
       throw new NotFoundException(`Department with ID ${id} not found`);
@@ -104,7 +101,7 @@ export class DepartmentsController {
   @ApiNotFoundResponse({ description: 'Department not found' })
   @ApiUnauthorizedResponse({ description: 'Not authenticated' })
   @Get(':id/employees')
-  async getDepartmentWithEmployees(@Param('id', ParseIntPipe) id: number) {
+  async getDepartmentWithEmployees(@Param('id', ParseIntPipe) id: number): Promise<Department> {
     return this.departmentsService.findOneWithEmployees(id);
   }
 
@@ -115,7 +112,7 @@ export class DepartmentsController {
   @ApiNotFoundResponse({ description: 'Department not found' })
   @ApiUnauthorizedResponse({ description: 'Not authenticated' })
   @Get(':id/active-employees')
-  async getDepartmentWithActiveEmployees(@Param('id', ParseIntPipe) id: number) {
+  async getDepartmentWithActiveEmployees(@Param('id', ParseIntPipe) id: number): Promise<Department> {
     return this.departmentsService.findOneWithActiveEmployees(id);
   }
 
@@ -132,10 +129,10 @@ export class DepartmentsController {
   @ApiForbiddenResponse({ description: 'Admin access required' })
   @Roles(UserRole.ADMIN)
   @Patch(':id')
-  update(
+  async update(
     @Param('id', ParseIntPipe) id: number,
     @Body() updateDepartmentDto: UpdateDepartmentDto,
-  ) {
+  ): Promise<Department> {
     return this.departmentsService.update(id, updateDepartmentDto);
   }
 
@@ -149,7 +146,7 @@ export class DepartmentsController {
   @ApiForbiddenResponse({ description: 'Admin access required' })
   @Roles(UserRole.ADMIN)
   @Delete(':id')
-  remove(@Param('id', ParseIntPipe) id: number) {
+  async remove(@Param('id', ParseIntPipe) id: number): Promise<string> {
     return this.departmentsService.remove(id);
   }
 }

@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
-import { ConfigModule, ConfigService } from '@nestjs/config';
+import { ConfigService } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
 import { AuthService } from '@/auth/auth.service';
 import { AuthController } from '@/auth/auth.controller';
@@ -15,10 +15,7 @@ import { HashUtil } from '@/common/utils/hash.util';
   imports: [
     UsersModule,
     PassportModule,
-    ConfigModule,
-
     JwtModule.registerAsync({
-      imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: async (configService: ConfigService) => {
         const secret = configService.get<string>('JWT_SECRET');
@@ -52,6 +49,5 @@ import { HashUtil } from '@/common/utils/hash.util';
       useClass: RolesGuard,
     },
   ],
-  exports: [AuthService],
 })
-export class AuthModule {}
+export class AuthModule { }

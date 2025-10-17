@@ -4,9 +4,9 @@ import {
     Column,
     CreateDateColumn,
     UpdateDateColumn,
-    //   OneToMany,
+    OneToMany,
 } from 'typeorm';
-// import { Employee } from '@/employees/entities/employee.entity';
+import { Employee } from '@/employees/entities/employee.entity';
 
 @Entity('departments')
 export class Department {
@@ -19,8 +19,9 @@ export class Department {
     @Column({ type: 'text', nullable: true })
     description: string;
 
-    // @OneToMany(() => Employee, (employee) => employee.department)
-    // employees: Employee[];
+    @OneToMany(() => Employee, (employee) => employee.department)
+    employees: Employee[];
+
 
     // ********************* for prod when i swich back to mysql or postgres *********************
 

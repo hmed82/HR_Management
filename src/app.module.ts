@@ -1,6 +1,4 @@
 import { Module } from '@nestjs/common';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule } from '@nestjs/config';
 // import { ConfigService } from '@nestjs/common';
@@ -9,6 +7,7 @@ import * as Joi from 'joi';
 import { join } from 'path';
 import { AuthModule } from './auth/auth.module';
 import { DepartmentsModule } from './departments/departments.module';
+import { EmployeesModule } from './employees/employees.module';
 
 @Module({
   imports: [
@@ -37,7 +36,7 @@ import { DepartmentsModule } from './departments/departments.module';
     }),
 
     // ************************** For MySQL (production) **************************
-    // ************************** change entities back too **************************
+    // ************************** change all entities back too **************************
 
     // TypeOrmModule.forRootAsync({
     //   imports: [ConfigModule],
@@ -69,8 +68,7 @@ import { DepartmentsModule } from './departments/departments.module';
     UsersModule,
     AuthModule,
     DepartmentsModule,
+    EmployeesModule,
   ],
-  controllers: [AppController],
-  providers: [AppService],
 })
-export class AppModule {}
+export class AppModule { }

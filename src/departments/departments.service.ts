@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ConflictException,
   Injectable,
   NotFoundException,
@@ -19,7 +20,7 @@ export class DepartmentsService {
   async create(createDepartmentDto: CreateDepartmentDto): Promise<Department> {
     const { name, description } = createDepartmentDto;
 
-    const existingDepartment = await this.findByName(name);
+    const existingDepartment = await this.departmentsRepo.findOne({ where: { name } });
     if (existingDepartment) {
       throw new ConflictException('Department exists already');
     }
@@ -28,7 +29,7 @@ export class DepartmentsService {
     return await this.departmentsRepo.save(department);
   }
 
-  findAll(): Promise<Department[]> {
+  async findAll(): Promise<Department[]> {
     return this.departmentsRepo.find();
   }
 
@@ -46,13 +47,13 @@ export class DepartmentsService {
     id: number,
     updateDepartmentDto: UpdateDepartmentDto,
   ): Promise<Department> {
-    const department = await this.findById(id);
+    const department = await this.departmentsRepo.findOne({ where: { id } });
     if (!department) {
       throw new NotFoundException(`Department with ID ${id} not found`);
     }
 
     if (updateDepartmentDto.name && updateDepartmentDto.name !== department.name) {
-      const existingDepartment = await this.findByName(updateDepartmentDto.name);
+      const existingDepartment = await this.departmentsRepo.findOne({ where: { name: updateDepartmentDto.name } });
       if (existingDepartment) {
         throw new ConflictException(
           `Department with name "${updateDepartmentDto.name}" already exists`,
@@ -65,22 +66,20 @@ export class DepartmentsService {
   }
 
   async remove(id: number): Promise<string> {
-    const department = await this.findById(id);
+    const department = await this.departmentsRepo.findOne({ where: { id } });
     if (!department) {
       throw new NotFoundException(`Department with ID ${id} not found`);
     }
 
-    // ****Check if department has employees linked to it
+    // ************Check if department has employees linked to it************
 
-    // if (department.employees && department.employees.length > 0) {
-    //   throw new BadRequestException(
-    //     `Cannot delete department. ${department.employees.length} employee(s) are assigned to this department. Please reassign or remove them first.`,
-    //   );
-    // }
+    if (department.employees && department.employees.length > 0) {
+      throw new BadRequestException(
+        `Cannot delete department. ${department.employees.length} employee(s) are assigned to this department. Please reassign or remove them first.`,
+      );
+    }
 
-
-    // ****Check if department has employees linked to it
-    // ****Uncomment and import BadRequestException where you create employee entity and add it in department entity
+    // ************Check if department has employees linked to it************
 
     // const deptWithEmployees = await this.findOneWithEmployees(id)
     // if (deptWithEmployees.employees && deptWithEmployees.employees.length > 0) {
@@ -92,7 +91,6 @@ export class DepartmentsService {
     await this.departmentsRepo.remove(department);
     return 'Department successfully deleted';
   }
-
 
   async findOneWithEmployees(id: number): Promise<Department> {
     const department = await this.departmentsRepo.findOne({
@@ -130,6 +128,7 @@ export class DepartmentsService {
       .getMany();
   }
 
+  // Alternative with explicit type if you want to expose employeeCount in the type
   // async findAllWithEmployeeCount(): Promise<Array<Department & { employeeCount: number }>> {
   //   return this.departmentsRepo
   //     .createQueryBuilder('dept')
