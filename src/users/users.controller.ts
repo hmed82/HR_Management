@@ -37,12 +37,12 @@ import { User } from '@/users/entities/user.entity';
 
 @ApiTags('Users')
 @Controller('users')
-@Serialize(UserDto)
 export class UsersController {
   constructor(private readonly usersService: UsersService) { }
 
   // Only admins can create users
   @Roles(UserRole.ADMIN) // Global guards already applied
+  @Serialize(UserDto)
   @Post()
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Create a new user (Admin only)' })
@@ -70,11 +70,12 @@ export class UsersController {
   })
   @ApiUnauthorizedResponse({ description: 'Not authenticated' })
   @ApiForbiddenResponse({ description: 'Admin access required' })
-  async findAll(@Query() paginationDto: PaginationDto): Promise<PaginatedResult<User>> {
+  async findAll(@Query() paginationDto: PaginationDto): Promise<PaginatedResult<UserDto>> {
     return this.usersService.findAll(paginationDto.page, paginationDto.limit);
   }
 
   // Current user's profile
+  @Serialize(UserDto)
   @Get('me')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get current user profile' })
@@ -88,6 +89,7 @@ export class UsersController {
   }
 
   // User or admin can access specific user
+  @Serialize(UserDto)
   @Get('/:id')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get user by ID' })
@@ -106,6 +108,7 @@ export class UsersController {
   }
 
   // User or admin can update
+  @Serialize(UserDto)
   @Patch('/:id')
   @ApiBearerAuth()
   @ApiOperation({

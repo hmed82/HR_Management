@@ -6,6 +6,7 @@ import {
   Matches,
   MaxLength,
   IsNotEmpty,
+  IsBoolean,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { UserRole } from '@/users/enums/user-role.enum';
@@ -27,16 +28,10 @@ export class CreateUserDto {
   @IsString()
   @MinLength(6, { message: 'Password must be at least 6 characters long' })
   @MaxLength(72, { message: 'Password must not exceed 72 characters' })
-  // Simple rule (development)
   @Matches(/^(?=.*[a-z])(?=.*\d).*$/, {
     message:
       'Password must contain at least one lowercase letter and one number',
   })
-  // For production (uncomment for stricter rule)
-  // @Matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*]).{8,}$/, {
-  //   message:
-  //     'Password must contain at least 8 characters, one uppercase, one lowercase, one number and one special character',
-  // })
   password: string;
 
   @ApiPropertyOptional({
@@ -50,6 +45,15 @@ export class CreateUserDto {
   name?: string;
 
   @ApiPropertyOptional({
+    example: true,
+    description: 'User active status',
+    default: true,
+  })
+  @IsBoolean()
+  @IsOptional()
+  isActive?: boolean;
+
+  @ApiPropertyOptional({
     example: UserRole.USER,
     description: 'User role',
     enum: UserRole,
@@ -60,5 +64,5 @@ export class CreateUserDto {
   @Matches(new RegExp(`^(${UserRole.ADMIN}|${UserRole.USER})$`), {
     message: 'Role must be either "admin" or "user"',
   })
-  role: UserRole = UserRole.USER;
+  role?: UserRole = UserRole.USER;
 }

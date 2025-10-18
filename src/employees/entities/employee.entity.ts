@@ -50,7 +50,7 @@ export class Employee {
 
     // *******************************************************************
 
-    @Column({ default: true })
+    @Column({ type: 'boolean', default: true })
     isActive: boolean;
 
 

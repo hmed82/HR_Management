@@ -107,6 +107,14 @@ export class EmployeeDto {
     })
     department?: SimpleDepartmentDto;
 
+    @ApiProperty({
+        example: true,
+        description: 'Is employee Active',
+        required: false,
+    })
+    @Expose()
+    isActive: boolean;
+
     // ************** i will add this functionality late **************
     // @Expose()
     // @ApiProperty()

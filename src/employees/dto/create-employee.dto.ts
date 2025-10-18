@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
     IsString,
     IsEmail,
@@ -8,6 +8,7 @@ import {
     MinLength,
     MaxLength,
     Matches,
+    IsBoolean,
 } from 'class-validator';
 
 export class CreateEmployeeDto {
@@ -49,6 +50,15 @@ export class CreateEmployeeDto {
         message: 'Phone number must be a valid Algerian phone number (e.g., 0550000000)',
     })
     phone?: string;
+
+    @ApiPropertyOptional({
+        example: true,
+        description: 'Employee active status',
+        default: true,
+    })
+    @IsBoolean()
+    @IsOptional()
+    isActive?: boolean;
 
     @ApiProperty({
         example: '2025-10-09T10:30:00.000Z',

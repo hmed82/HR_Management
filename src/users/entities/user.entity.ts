@@ -23,7 +23,7 @@ export class User {
   @Column({ nullable: true })
   name?: string;
 
-  @Column({ default: true })
+  @Column({ type: 'boolean', default: true })
   isActive: boolean;
 
   // ********************* for prod when i swich back to mysql or postgres *********************

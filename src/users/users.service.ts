@@ -6,10 +6,12 @@ import {
 import { User } from '@/users/entities/user.entity';
 import { CreateUserDto } from '@/users/dto/create-user.dto';
 import { UpdateUserDto } from '@/users/dto/update-user.dto';
+import { UserDto } from '@/users/dto/user.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { HashUtil } from '@/common/utils/hash.util';
 import { PaginatedResult } from '@/common/interfaces/paginated-result.interface';
+import { plainToInstance } from 'class-transformer';
 
 @Injectable()
 export class UsersService {
@@ -36,7 +38,7 @@ export class UsersService {
     return await this.usersRepo.save(user);
   }
 
-  async findAll(page: number, limit: number): Promise<PaginatedResult<User>> {
+  async findAll(page: number, limit: number): Promise<PaginatedResult<UserDto>> {
     // findAndCount() returns array: [items, total count]
     const [items, total] = await this.usersRepo.findAndCount({
       skip: (page - 1) * limit, // OFFSET: how many records to skip
@@ -45,7 +47,7 @@ export class UsersService {
 
     // Return paginated response with metadata
     return {
-      data: items,
+      data: plainToInstance(UserDto, items, { excludeExtraneousValues: true }),
       meta: {
         totalItems: total,
         itemCount: items.length,

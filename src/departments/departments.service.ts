@@ -72,21 +72,12 @@ export class DepartmentsService {
     }
 
     // ************Check if department has employees linked to it************
-
-    if (department.employees && department.employees.length > 0) {
+    const deptWithEmployees = await this.findOneWithEmployees(id)
+    if (deptWithEmployees.employees && deptWithEmployees.employees.length > 0) {
       throw new BadRequestException(
-        `Cannot delete department. ${department.employees.length} employee(s) are assigned to this department. Please reassign or remove them first.`,
+        `Cannot delete department. ${deptWithEmployees.employees.length} employee(s) are assigned to this department. Please reassign or remove them first.`,
       );
     }
-
-    // ************Check if department has employees linked to it************
-
-    // const deptWithEmployees = await this.findOneWithEmployees(id)
-    // if (deptWithEmployees.employees && deptWithEmployees.employees.length > 0) {
-    //   throw new BadRequestException(
-    //     `Cannot delete department. ${deptWithEmployees.employees.length} employee(s) are assigned to this department. Please reassign or remove them first.`,
-    //   );
-    // }
 
     await this.departmentsRepo.remove(department);
     return 'Department successfully deleted';
