@@ -9,18 +9,21 @@ import { UpdateDepartmentDto } from '@/departments/dto/update-department.dto';
 import { Department } from '@/departments/entities/department.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { PaginateQuery, paginate, Paginated } from 'nestjs-paginate';
 
 @Injectable()
 export class DepartmentsService {
   constructor(
     @InjectRepository(Department)
     private readonly departmentsRepo: Repository<Department>,
-  ) { }
+  ) {}
 
   async create(createDepartmentDto: CreateDepartmentDto): Promise<Department> {
     const { name, description } = createDepartmentDto;
 
-    const existingDepartment = await this.departmentsRepo.findOne({ where: { name } });
+    const existingDepartment = await this.departmentsRepo.findOne({
+      where: { name },
+    });
     if (existingDepartment) {
       throw new ConflictException('Department exists already');
     }
@@ -29,8 +32,14 @@ export class DepartmentsService {
     return await this.departmentsRepo.save(department);
   }
 
-  async findAll(): Promise<Department[]> {
-    return this.departmentsRepo.find();
+  // using the nestjs-paginate package
+  // check getall in employees module for the official NestJs Doc approach
+  async findAll(query: PaginateQuery): Promise<Paginated<Department>> {
+    return paginate(query, this.departmentsRepo, {
+      sortableColumns: ['id'],
+      defaultLimit: 10,
+      maxLimit: 100,
+    });
   }
 
   async findByName(name: string): Promise<Department | null> {
@@ -52,8 +61,13 @@ export class DepartmentsService {
       throw new NotFoundException(`Department with ID ${id} not found`);
     }
 
-    if (updateDepartmentDto.name && updateDepartmentDto.name !== department.name) {
-      const existingDepartment = await this.departmentsRepo.findOne({ where: { name: updateDepartmentDto.name } });
+    if (
+      updateDepartmentDto.name &&
+      updateDepartmentDto.name !== department.name
+    ) {
+      const existingDepartment = await this.departmentsRepo.findOne({
+        where: { name: updateDepartmentDto.name },
+      });
       if (existingDepartment) {
         throw new ConflictException(
           `Department with name "${updateDepartmentDto.name}" already exists`,
@@ -72,7 +86,7 @@ export class DepartmentsService {
     }
 
     // ************Check if department has employees linked to it************
-    const deptWithEmployees = await this.findOneWithEmployees(id)
+    const deptWithEmployees = await this.findOneWithEmployees(id);
     if (deptWithEmployees.employees && deptWithEmployees.employees.length > 0) {
       throw new BadRequestException(
         `Cannot delete department. ${deptWithEmployees.employees.length} employee(s) are assigned to this department. Please reassign or remove them first.`,
@@ -99,9 +113,14 @@ export class DepartmentsService {
   async findOneWithActiveEmployees(id: number): Promise<Department> {
     const department = await this.departmentsRepo
       .createQueryBuilder('dept')
-      .leftJoinAndSelect('dept.employees', 'employee', 'employee.isActive = :active', {
-        active: true,
-      })
+      .leftJoinAndSelect(
+        'dept.employees',
+        'employee',
+        'employee.isActive = :active',
+        {
+          active: true,
+        },
+      )
       .where('dept.id = :id', { id })
       .getOne();
 

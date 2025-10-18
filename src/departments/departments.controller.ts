@@ -29,6 +29,8 @@ import { UserRole } from '@/users/enums/user-role.enum';
 import { Serialize } from '@/common/interceptors/serialize.interceptor';
 import { DepartmentDto } from '@/departments/dto/department.dto';
 import { Department } from '@/departments/entities/department.entity';
+import { Paginate, Paginated } from 'nestjs-paginate';
+import type { PaginateQuery } from 'nestjs-paginate';
 
 @ApiTags('Departments')
 @ApiBearerAuth()
@@ -49,11 +51,12 @@ export class DepartmentsController {
   @ApiForbiddenResponse({ description: 'Admin access required' })
   @Roles(UserRole.ADMIN)
   @Post()
-  async create(@Body() createDepartmentDto: CreateDepartmentDto): Promise<Department> {
+  async create(
+    @Body() createDepartmentDto: CreateDepartmentDto,
+  ): Promise<Department> {
     return this.departmentsService.create(createDepartmentDto);
   }
 
-  @Serialize(DepartmentDto)
   @ApiOperation({ summary: 'Get all departments' })
   @ApiOkResponse({
     description: 'Departments retrieved successfully',
@@ -61,8 +64,8 @@ export class DepartmentsController {
   })
   @ApiUnauthorizedResponse({ description: 'Not authenticated' })
   @Get()
-  async findAll(): Promise<Department[]> {
-    return this.departmentsService.findAll();
+  findAll(@Paginate() query: PaginateQuery): Promise<Paginated<Department>> {
+    return this.departmentsService.findAll(query);
   }
 
   @Serialize(DepartmentDto)
@@ -101,7 +104,9 @@ export class DepartmentsController {
   @ApiNotFoundResponse({ description: 'Department not found' })
   @ApiUnauthorizedResponse({ description: 'Not authenticated' })
   @Get(':id/employees')
-  async getDepartmentWithEmployees(@Param('id', ParseIntPipe) id: number): Promise<Department> {
+  async getDepartmentWithEmployees(
+    @Param('id', ParseIntPipe) id: number,
+  ): Promise<Department> {
     return this.departmentsService.findOneWithEmployees(id);
   }
 
@@ -112,7 +117,9 @@ export class DepartmentsController {
   @ApiNotFoundResponse({ description: 'Department not found' })
   @ApiUnauthorizedResponse({ description: 'Not authenticated' })
   @Get(':id/active-employees')
-  async getDepartmentWithActiveEmployees(@Param('id', ParseIntPipe) id: number): Promise<Department> {
+  async getDepartmentWithActiveEmployees(
+    @Param('id', ParseIntPipe) id: number,
+  ): Promise<Department> {
     return this.departmentsService.findOneWithActiveEmployees(id);
   }
 

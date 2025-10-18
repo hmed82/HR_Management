@@ -50,4 +50,4 @@ import { HashUtil } from '@/common/utils/hash.util';
     },
   ],
 })
-export class AuthModule { }
+export class AuthModule {}

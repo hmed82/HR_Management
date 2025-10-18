@@ -8,9 +8,8 @@ import { Repository } from 'typeorm';
 import { CreateEmployeeDto } from './dto/create-employee.dto';
 import { UpdateEmployeeDto } from './dto/update-employee.dto';
 import { Employee } from './entities/employee.entity';
-import { PaginateQuery, paginate, Paginated } from 'nestjs-paginate'
+import { PaginateQuery, paginate, Paginated } from 'nestjs-paginate';
 import { DepartmentsService } from '../departments/departments.service';
-
 
 // Interface for statistics
 export interface EmployeeStatistics {
@@ -30,23 +29,26 @@ export class EmployeesService {
     @InjectRepository(Employee)
     private readonly employeesRepo: Repository<Employee>,
     private readonly departmentsService: DepartmentsService,
-  ) { }
-
+  ) {}
 
   async create(createEmployeeDto: CreateEmployeeDto): Promise<Employee> {
     const { email, departmentId, ...rest } = createEmployeeDto;
 
     if (email) {
-      const existingEmployee = await this.employeesRepo.findOne({ where: { email } });
+      const existingEmployee = await this.employeesRepo.findOne({
+        where: { email },
+      });
       if (existingEmployee) {
         throw new ConflictException('Employee with this email already exists');
       }
     }
 
     //Check if department exists
-    const department = await this.departmentsService.findById(departmentId)
+    const department = await this.departmentsService.findById(departmentId);
     if (!department) {
-      throw new NotFoundException(`Department with ID ${departmentId} not found`)
+      throw new NotFoundException(
+        `Department with ID ${departmentId} not found`,
+      );
     }
 
     const employee = this.employeesRepo.create({
@@ -58,14 +60,14 @@ export class EmployeesService {
     return await this.employeesRepo.save(employee);
   }
 
-  // using the nestjs-typeorm-paginate package
+  // using the nestjs-paginate package
   // check getall in employees module for the official NestJs Doc approach
   async findAll(query: PaginateQuery): Promise<Paginated<Employee>> {
     return paginate(query, this.employeesRepo, {
       sortableColumns: ['id'],
       defaultLimit: 10,
       maxLimit: 100,
-    })
+    });
   }
 
   async findById(id: number): Promise<Employee> {
@@ -115,7 +117,7 @@ export class EmployeesService {
     // Check email uniqueness if email is being updated
     if (updateEmployeeDto.email && updateEmployeeDto.email !== employee.email) {
       const existingEmployee = await this.employeesRepo.findOne({
-        where: { email: updateEmployeeDto.email }
+        where: { email: updateEmployeeDto.email },
       });
       if (existingEmployee) {
         throw new ConflictException('Email already exists');
@@ -124,7 +126,9 @@ export class EmployeesService {
 
     // Verify department exists if being updated
     if (updateEmployeeDto.departmentId) {
-      const department = await this.departmentsService.findById(updateEmployeeDto.departmentId);
+      const department = await this.departmentsService.findById(
+        updateEmployeeDto.departmentId,
+      );
       if (!department) {
         throw new NotFoundException(
           `Department with ID ${updateEmployeeDto.departmentId} not found`,
@@ -176,8 +180,7 @@ export class EmployeesService {
     //   })),
     // };
 
-
-    // Single query to get all statistics  
+    // Single query to get all statistics
     const stats = await this.employeesRepo
       .createQueryBuilder('employee')
       .select([

@@ -19,7 +19,7 @@ export class UsersService {
     @InjectRepository(User)
     private readonly usersRepo: Repository<User>,
     private hashUtil: HashUtil,
-  ) { }
+  ) {}
 
   async create(createUserDto: CreateUserDto): Promise<User> {
     const { email, password, ...rest } = createUserDto;
@@ -38,7 +38,10 @@ export class UsersService {
     return await this.usersRepo.save(user);
   }
 
-  async findAll(page: number, limit: number): Promise<PaginatedResult<UserDto>> {
+  async findAll(
+    page: number,
+    limit: number,
+  ): Promise<PaginatedResult<UserDto>> {
     // findAndCount() returns array: [items, total count]
     const [items, total] = await this.usersRepo.findAndCount({
       skip: (page - 1) * limit, // OFFSET: how many records to skip

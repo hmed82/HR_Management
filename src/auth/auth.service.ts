@@ -13,7 +13,7 @@ export class AuthService {
     private usersService: UsersService,
     private jwtService: JwtService,
     private hashUtil: HashUtil,
-  ) { }
+  ) {}
 
   async register(createUserDto: CreateUserDto): Promise<AuthResponse> {
     const user = await this.usersService.create(createUserDto);
@@ -54,7 +54,7 @@ export class AuthService {
   // async logout(): Promise<{ message: string }> {
   //   // With stateless JWT, logout is handled client-side
   //   // (you can implement token blacklist if needed)
-  //   // what i will probably do is to have a refresh token and store it in the user table 
+  //   // what i will probably do is to have a refresh token and store it in the user table
   //   // and delete it on logout and blacklist the access token for its remaining time to live
   //   return { message: 'Logged out successfully' };
   // }

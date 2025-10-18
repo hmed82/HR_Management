@@ -37,7 +37,7 @@ import type { PaginateQuery } from 'nestjs-paginate';
 @ApiBearerAuth()
 @Controller('employees')
 export class EmployeesController {
-  constructor(private readonly employeesService: EmployeesService) { }
+  constructor(private readonly employeesService: EmployeesService) {}
 
   @ApiOperation({ summary: 'Create a new employee (Admin only)' })
   @ApiCreatedResponse({
@@ -107,7 +107,9 @@ export class EmployeesController {
   @ApiUnauthorizedResponse({ description: 'Not authenticated' })
   @Serialize(EmployeeDto)
   @Get('department/:departmentId')
-  findByDepartment(@Param('departmentId', ParseIntPipe) departmentId: number): Promise<Employee[]> {
+  findByDepartment(
+    @Param('departmentId', ParseIntPipe) departmentId: number,
+  ): Promise<Employee[]> {
     return this.employeesService.findByDepartment(departmentId);
   }
 
@@ -133,7 +135,9 @@ export class EmployeesController {
   @ApiUnauthorizedResponse({ description: 'Not authenticated' })
   @Serialize(EmployeeDto)
   @Get(':id/department')
-  findOneWithDepartment(@Param('id', ParseIntPipe) id: number): Promise<Employee> {
+  findOneWithDepartment(
+    @Param('id', ParseIntPipe) id: number,
+  ): Promise<Employee> {
     return this.employeesService.findOneWithDepartment(id);
   }
 

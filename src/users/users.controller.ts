@@ -38,7 +38,7 @@ import { User } from '@/users/entities/user.entity';
 @ApiTags('Users')
 @Controller('users')
 export class UsersController {
-  constructor(private readonly usersService: UsersService) { }
+  constructor(private readonly usersService: UsersService) {}
 
   // Only admins can create users
   @Roles(UserRole.ADMIN) // Global guards already applied
@@ -70,7 +70,9 @@ export class UsersController {
   })
   @ApiUnauthorizedResponse({ description: 'Not authenticated' })
   @ApiForbiddenResponse({ description: 'Admin access required' })
-  async findAll(@Query() paginationDto: PaginationDto): Promise<PaginatedResult<UserDto>> {
+  async findAll(
+    @Query() paginationDto: PaginationDto,
+  ): Promise<PaginatedResult<UserDto>> {
     return this.usersService.findAll(paginationDto.page, paginationDto.limit);
   }
 

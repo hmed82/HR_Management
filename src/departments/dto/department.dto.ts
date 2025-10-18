@@ -46,6 +46,5 @@ export class DepartmentDto {
     required: false,
   })
   @Expose()
-  employeeCount?: number
-
+  employeeCount?: number;
 }

@@ -27,7 +27,7 @@ export class AuthController {
   constructor(
     private readonly authService: AuthService,
     private readonly usersService: UsersService,
-  ) { }
+  ) {}
 
   // Public routes - no authentication required
   @Public()

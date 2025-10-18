@@ -11,4 +11,4 @@ import { HashUtil } from '@/common/utils/hash.util';
   providers: [UsersService, HashUtil],
   exports: [UsersService],
 })
-export class UsersModule { }
+export class UsersModule {}

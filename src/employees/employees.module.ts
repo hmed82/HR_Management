@@ -10,4 +10,4 @@ import { DepartmentsModule } from '@/departments/departments.module';
   controllers: [EmployeesController],
   providers: [EmployeesService],
 })
-export class EmployeesModule { }
+export class EmployeesModule {}
