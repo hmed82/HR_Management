@@ -6,12 +6,10 @@ import {
 import { User } from '@/users/entities/user.entity';
 import { CreateUserDto } from '@/users/dto/create-user.dto';
 import { UpdateUserDto } from '@/users/dto/update-user.dto';
-import { UserDto } from '@/users/dto/user.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { HashUtil } from '@/common/utils/hash.util';
-import { PaginatedResult } from '@/common/interfaces/paginated-result.interface';
-import { plainToInstance } from 'class-transformer';
+import { PaginateQuery, paginate, Paginated, FilterOperator } from 'nestjs-paginate';
 
 @Injectable()
 export class UsersService {
@@ -19,7 +17,7 @@ export class UsersService {
     @InjectRepository(User)
     private readonly usersRepo: Repository<User>,
     private hashUtil: HashUtil,
-  ) {}
+  ) { }
 
   async create(createUserDto: CreateUserDto): Promise<User> {
     const { email, password, ...rest } = createUserDto;
@@ -38,27 +36,18 @@ export class UsersService {
     return await this.usersRepo.save(user);
   }
 
-  async findAll(
-    page: number,
-    limit: number,
-  ): Promise<PaginatedResult<UserDto>> {
-    // findAndCount() returns array: [items, total count]
-    const [items, total] = await this.usersRepo.findAndCount({
-      skip: (page - 1) * limit, // OFFSET: how many records to skip
-      take: limit,
-    });
-
-    // Return paginated response with metadata
-    return {
-      data: plainToInstance(UserDto, items, { excludeExtraneousValues: true }),
-      meta: {
-        totalItems: total,
-        itemCount: items.length,
-        itemsPerPage: limit,
-        totalPages: Math.ceil(total / limit),
-        currentPage: page,
+  async findAll(query: PaginateQuery): Promise<Paginated<User>> {
+    return paginate(query, this.usersRepo, {
+      sortableColumns: ['id', 'email', 'name', 'createdAt', 'updatedAt'],
+      searchableColumns: ['email', 'name'],
+      filterableColumns: {
+        role: [FilterOperator.EQ],
+        email: [FilterOperator.EQ, FilterOperator.ILIKE],
       },
-    };
+      defaultSortBy: [['id', 'ASC']],
+      defaultLimit: 10,
+      maxLimit: 100,
+    });
   }
 
   async findByEmail(email: string): Promise<User | null> {
@@ -66,16 +55,18 @@ export class UsersService {
     return user;
   }
 
-  async findById(id: number): Promise<User | null> {
+  async findById(id: number): Promise<User> {
     const user = await this.usersRepo.findOne({ where: { id } });
+
+    if (!user) {
+      throw new NotFoundException(`User with ID ${id} not found`);
+    }
+
     return user;
   }
 
   async update(id: number, updateUserDto: UpdateUserDto): Promise<User> {
-    const user = await this.usersRepo.findOne({ where: { id } });
-    if (!user) {
-      throw new NotFoundException('User not found');
-    }
+    const user = await this.findById(id);
 
     // Hash password if provided
     if (updateUserDto.password) {
@@ -88,13 +79,12 @@ export class UsersService {
     return this.usersRepo.save(user);
   }
 
-  async remove(id: number): Promise<string> {
+  async remove(id: number): Promise<void> {
     const user = await this.usersRepo.findOne({ where: { id } });
     if (!user) {
       throw new NotFoundException('User not found');
     }
 
     await this.usersRepo.remove(user);
-    return 'User successfully deleted';
   }
 }

@@ -8,7 +8,8 @@ import {
   Delete,
   ForbiddenException,
   ParseIntPipe,
-  Query,
+  HttpCode,
+  HttpStatus,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -31,16 +32,15 @@ import { UserRole } from '@/users/enums/user-role.enum';
 import { Roles } from '@/auth/decorators/roles.decorator';
 import { CurrentUser } from '@/users/decorators/current-user.decorator';
 import type { JwtUser } from '@/users/decorators/current-user.decorator';
-import { PaginatedResult } from '@/common/interfaces/paginated-result.interface';
-import { PaginationDto } from '@/common/dto/pagination.dto';
+import { Paginate, Paginated } from 'nestjs-paginate';
+import type { PaginateQuery } from 'nestjs-paginate';
 import { User } from '@/users/entities/user.entity';
 
 @ApiTags('Users')
 @Controller('users')
 export class UsersController {
-  constructor(private readonly usersService: UsersService) {}
+  constructor(private readonly usersService: UsersService) { }
 
-  // Only admins can create users
   @Roles(UserRole.ADMIN) // Global guards already applied
   @Serialize(UserDto)
   @Post()
@@ -59,23 +59,6 @@ export class UsersController {
     return await this.usersService.create(createUserDto);
   }
 
-  // Only admins can get all users
-  @Roles(UserRole.ADMIN)
-  @Get()
-  @ApiBearerAuth()
-  @ApiOperation({ summary: 'Get all users (Admin only)' })
-  @ApiOkResponse({
-    description: 'Users retrieved successfully',
-    type: [UserDto],
-  })
-  @ApiUnauthorizedResponse({ description: 'Not authenticated' })
-  @ApiForbiddenResponse({ description: 'Admin access required' })
-  async findAll(
-    @Query() paginationDto: PaginationDto,
-  ): Promise<PaginatedResult<UserDto>> {
-    return this.usersService.findAll(paginationDto.page, paginationDto.limit);
-  }
-
   // Current user's profile
   @Serialize(UserDto)
   @Get('me')
@@ -86,8 +69,24 @@ export class UsersController {
     type: UserDto,
   })
   @ApiUnauthorizedResponse({ description: 'Not authenticated' })
-  async getProfile(@CurrentUser() user: JwtUser): Promise<User | null> {
+  async getProfile(@CurrentUser() user: JwtUser): Promise<User> {
     return this.usersService.findById(user.id);
+  }
+
+  @Roles(UserRole.ADMIN)
+  @Serialize(UserDto)
+  @Get()
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get all users (Admin only)' })
+  @ApiOkResponse({
+    description: 'Users retrieved successfully',
+  })
+  @ApiUnauthorizedResponse({ description: 'Not authenticated' })
+  @ApiForbiddenResponse({ description: 'Admin access required' })
+  async findAll(
+    @Paginate() query: PaginateQuery,
+  ): Promise<Paginated<User>> {
+    return this.usersService.findAll(query);
   }
 
   // User or admin can access specific user
@@ -102,7 +101,7 @@ export class UsersController {
   async findOne(
     @Param('id', ParseIntPipe) id: number,
     @CurrentUser() user: JwtUser,
-  ): Promise<User | null> {
+  ): Promise<User> {
     if (user.role !== UserRole.ADMIN && user.id !== id) {
       throw new ForbiddenException('You can only access your own profile');
     }
@@ -119,6 +118,7 @@ export class UsersController {
   @ApiOkResponse({ description: 'User successfully updated', type: UserDto })
   @ApiNotFoundResponse({ description: 'User not found' })
   @ApiBadRequestResponse({ description: 'Invalid input data' })
+  @ApiConflictResponse({ description: 'Email already in use' })
   @ApiUnauthorizedResponse({ description: 'Not authenticated' })
   @ApiForbiddenResponse({ description: 'You can only update your own profile' })
   async update(
@@ -126,13 +126,12 @@ export class UsersController {
     @Body() updateUserDto: UpdateUserDto,
     @CurrentUser() user: JwtUser,
   ): Promise<User> {
-    if (user.role !== UserRole.ADMIN && user.id !== id) {
+    if (user.role !== UserRole.ADMIN && user.id !== id) { //i gotta make a guard for this later
       throw new ForbiddenException('You can only update your own profile');
     }
     return this.usersService.update(id, updateUserDto);
   }
 
-  // Only admins can delete
   @Roles(UserRole.ADMIN)
   @Delete('/:id')
   @ApiBearerAuth()
@@ -141,7 +140,8 @@ export class UsersController {
   @ApiNotFoundResponse({ description: 'User not found' })
   @ApiUnauthorizedResponse({ description: 'Not authenticated' })
   @ApiForbiddenResponse({ description: 'Admin access required' })
-  async remove(@Param('id', ParseIntPipe) id: number): Promise<string> {
-    return await this.usersService.remove(id);
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async remove(@Param('id', ParseIntPipe) id: number): Promise<void> {
+    await this.usersService.remove(id);
   }
 }

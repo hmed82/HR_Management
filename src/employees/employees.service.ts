@@ -5,13 +5,12 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { CreateEmployeeDto } from './dto/create-employee.dto';
-import { UpdateEmployeeDto } from './dto/update-employee.dto';
-import { Employee } from './entities/employee.entity';
-import { PaginateQuery, paginate, Paginated } from 'nestjs-paginate';
-import { DepartmentsService } from '../departments/departments.service';
+import { CreateEmployeeDto } from '@/employees/dto/create-employee.dto';
+import { UpdateEmployeeDto } from '@/employees/dto/update-employee.dto';
+import { Employee } from '@/employees/entities/employee.entity';
+import { PaginateQuery, paginate, Paginated, FilterOperator } from 'nestjs-paginate';
+import { DepartmentsService } from '@/departments/departments.service';
 
-// Interface for statistics
 export interface EmployeeStatistics {
   total: number;
   active: number;
@@ -29,7 +28,7 @@ export class EmployeesService {
     @InjectRepository(Employee)
     private readonly employeesRepo: Repository<Employee>,
     private readonly departmentsService: DepartmentsService,
-  ) {}
+  ) { }
 
   async create(createEmployeeDto: CreateEmployeeDto): Promise<Employee> {
     const { email, departmentId, ...rest } = createEmployeeDto;
@@ -45,11 +44,6 @@ export class EmployeesService {
 
     //Check if department exists
     const department = await this.departmentsService.findById(departmentId);
-    if (!department) {
-      throw new NotFoundException(
-        `Department with ID ${departmentId} not found`,
-      );
-    }
 
     const employee = this.employeesRepo.create({
       email,
@@ -60,13 +54,18 @@ export class EmployeesService {
     return await this.employeesRepo.save(employee);
   }
 
-  // using the nestjs-paginate package
-  // check getall in employees module for the official NestJs Doc approach
   async findAll(query: PaginateQuery): Promise<Paginated<Employee>> {
     return paginate(query, this.employeesRepo, {
-      sortableColumns: ['id'],
+      sortableColumns: ['id', 'firstName', 'lastName', 'email', 'hireDate', 'createdAt'],
+      searchableColumns: ['firstName', 'lastName', 'email'],
+      filterableColumns: {
+        departmentId: [FilterOperator.EQ],
+        isActive: [FilterOperator.EQ],
+      },
+      defaultSortBy: [['id', 'ASC']],
       defaultLimit: 10,
       maxLimit: 100,
+      relations: ['department'],
     });
   }
 
@@ -93,10 +92,22 @@ export class EmployeesService {
     return employee;
   }
 
-  async findByDepartment(departmentId: number): Promise<Employee[]> {
-    return this.employeesRepo.find({
-      where: { departmentId },
-      relations: ['department'],
+  async findByDepartment(departmentId: number, query: PaginateQuery): Promise<Paginated<Employee>> {
+    await this.departmentsService.findById(departmentId);
+
+    const queryBuilder = this.employeesRepo
+      .createQueryBuilder('employee')
+      .where('employee.departmentId = :departmentId', { departmentId });
+
+    return paginate(query, queryBuilder, {
+      sortableColumns: ['id', 'firstName', 'lastName', 'email', 'hireDate', 'createdAt'],
+      searchableColumns: ['firstName', 'lastName', 'email'],
+      filterableColumns: {
+        isActive: [FilterOperator.EQ],
+      },
+      defaultSortBy: [['id', 'ASC']],
+      defaultLimit: 10,
+      maxLimit: 100,
     });
   }
 
@@ -108,11 +119,7 @@ export class EmployeesService {
     id: number,
     updateEmployeeDto: UpdateEmployeeDto,
   ): Promise<Employee> {
-    const employee = await this.employeesRepo.findOne({ where: { id } });
-
-    if (!employee) {
-      throw new NotFoundException(`Employee with ID ${id} not found`);
-    }
+    const employee = await this.findById(id);
 
     // Check email uniqueness if email is being updated
     if (updateEmployeeDto.email && updateEmployeeDto.email !== employee.email) {
@@ -125,28 +132,17 @@ export class EmployeesService {
     }
 
     // Verify department exists if being updated
+    // If departmentId doestnt exist : departmentsService.findById throws NotFoundException
     if (updateEmployeeDto.departmentId) {
-      const department = await this.departmentsService.findById(
-        updateEmployeeDto.departmentId,
-      );
-      if (!department) {
-        throw new NotFoundException(
-          `Department with ID ${updateEmployeeDto.departmentId} not found`,
-        );
-      }
+      await this.departmentsService.findById(updateEmployeeDto.departmentId);
     }
 
     Object.assign(employee, updateEmployeeDto);
     return this.employeesRepo.save(employee);
   }
 
-  //************************************************************************************************************** */
-
   async delete(id: number): Promise<void> {
-    const employee = await this.employeesRepo.findOne({ where: { id } });
-    if (!employee) {
-      throw new NotFoundException(`Employee with ID ${id} not found`);
-    }
+    const employee = await this.findById(id);
     await this.employeesRepo.remove(employee);
   }
 
@@ -162,23 +158,6 @@ export class EmployeesService {
       .groupBy('department.id')
       .addGroupBy('department.name')
       .getRawMany();
-
-    // const total = await this.employeesRepo.count();
-    // const active = await this.employeesRepo.count({
-    //   where: { isActive: true },
-    // });
-    // const inactive = total - active;
-
-    // return {
-    //   total,
-    //   active,
-    //   inactive,
-    //   byDepartment: byDepartment.map((item) => ({
-    //     departmentId: item.departmentId,
-    //     departmentName: item.departmentName,
-    //     count: parseInt(item.count, 10),
-    //   })),
-    // };
 
     // Single query to get all statistics
     const stats = await this.employeesRepo

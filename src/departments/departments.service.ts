@@ -9,14 +9,14 @@ import { UpdateDepartmentDto } from '@/departments/dto/update-department.dto';
 import { Department } from '@/departments/entities/department.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { PaginateQuery, paginate, Paginated } from 'nestjs-paginate';
+import { PaginateQuery, paginate, Paginated, FilterOperator } from 'nestjs-paginate';
 
 @Injectable()
 export class DepartmentsService {
   constructor(
     @InjectRepository(Department)
     private readonly departmentsRepo: Repository<Department>,
-  ) {}
+  ) { }
 
   async create(createDepartmentDto: CreateDepartmentDto): Promise<Department> {
     const { name, description } = createDepartmentDto;
@@ -32,11 +32,14 @@ export class DepartmentsService {
     return await this.departmentsRepo.save(department);
   }
 
-  // using the nestjs-paginate package
-  // check getall in employees module for the official NestJs Doc approach
   async findAll(query: PaginateQuery): Promise<Paginated<Department>> {
     return paginate(query, this.departmentsRepo, {
-      sortableColumns: ['id'],
+      sortableColumns: ['id', 'name', 'createdAt', 'updatedAt'],
+      searchableColumns: ['name', 'description'],
+      filterableColumns: {
+        name: [FilterOperator.EQ, FilterOperator.ILIKE],
+      },
+      defaultSortBy: [['id', 'ASC']],
       defaultLimit: 10,
       maxLimit: 100,
     });
@@ -47,8 +50,13 @@ export class DepartmentsService {
     return department;
   }
 
-  async findById(id: number): Promise<Department | null> {
+  async findById(id: number): Promise<Department> {
     const department = await this.departmentsRepo.findOne({ where: { id } });
+
+    if (!department) {
+      throw new NotFoundException(`Department with ID ${id} not found`);
+    }
+
     return department;
   }
 
@@ -56,12 +64,9 @@ export class DepartmentsService {
     id: number,
     updateDepartmentDto: UpdateDepartmentDto,
   ): Promise<Department> {
-    const department = await this.departmentsRepo.findOne({ where: { id } });
-    if (!department) {
-      throw new NotFoundException(`Department with ID ${id} not found`);
-    }
+    const department = await this.findById(id);
 
-    if (
+    if ( // I am using this piece of code elsewhere, maybe refactor it later
       updateDepartmentDto.name &&
       updateDepartmentDto.name !== department.name
     ) {
@@ -79,13 +84,10 @@ export class DepartmentsService {
     return this.departmentsRepo.save(department);
   }
 
-  async remove(id: number): Promise<string> {
-    const department = await this.departmentsRepo.findOne({ where: { id } });
-    if (!department) {
-      throw new NotFoundException(`Department with ID ${id} not found`);
-    }
+  async remove(id: number): Promise<void> {
+    const department = await this.findById(id);
 
-    // ************Check if department has employees linked to it************
+    // Check if department has employees linked to it
     const deptWithEmployees = await this.findOneWithEmployees(id);
     if (deptWithEmployees.employees && deptWithEmployees.employees.length > 0) {
       throw new BadRequestException(
@@ -94,7 +96,6 @@ export class DepartmentsService {
     }
 
     await this.departmentsRepo.remove(department);
-    return 'Department successfully deleted';
   }
 
   async findOneWithEmployees(id: number): Promise<Department> {
@@ -110,39 +111,37 @@ export class DepartmentsService {
     return department;
   }
 
-  async findOneWithActiveEmployees(id: number): Promise<Department> {
-    const department = await this.departmentsRepo
-      .createQueryBuilder('dept')
-      .leftJoinAndSelect(
-        'dept.employees',
-        'employee',
-        'employee.isActive = :active',
-        {
-          active: true,
-        },
-      )
-      .where('dept.id = :id', { id })
-      .getOne();
+  // // Alternative with explicit type if you want to expose employeeCount in the type
+  // async findAllWithEmployeeCount1(): Promise<Array<Department & { employeeCount: number }>> {
+  //   return this.departmentsRepo
+  //     .createQueryBuilder('dept')
+  //     .loadRelationCountAndMap('dept.employeeCount', 'dept.employees')
+  //     .getMany() as Promise<Array<Department & { employeeCount: number }>>;
+  // }
 
-    if (!department) {
-      throw new NotFoundException(`Department with ID ${id} not found`);
-    }
-
-    return department;
-  }
-
-  async findAllWithEmployeeCount(): Promise<Department[]> {
+  async findAllWithEmployeeCount1(): Promise<Department[]> {
     return this.departmentsRepo
       .createQueryBuilder('dept')
       .loadRelationCountAndMap('dept.employeeCount', 'dept.employees')
       .getMany();
   }
 
-  // Alternative with explicit type if you want to expose employeeCount in the type
-  // async findAllWithEmployeeCount(): Promise<Array<Department & { employeeCount: number }>> {
-  //   return this.departmentsRepo
-  //     .createQueryBuilder('dept')
-  //     .loadRelationCountAndMap('dept.employeeCount', 'dept.employees')
-  //     .getMany() as Promise<Array<Department & { employeeCount: number }>>;
-  // }
+  async findAllWithEmployeeCount(query: PaginateQuery): Promise<Paginated<Department>> {
+    // Create query builder with employee count
+    const queryBuilder = this.departmentsRepo
+      .createQueryBuilder('dept')
+      .loadRelationCountAndMap('dept.employeeCount', 'dept.employees');
+
+    // Use paginate with the custom query builder
+    return paginate(query, queryBuilder, {
+      sortableColumns: ['id', 'name', 'createdAt', 'updatedAt'],
+      searchableColumns: ['name', 'description'],
+      filterableColumns: {
+        name: [FilterOperator.EQ, FilterOperator.ILIKE],
+      },
+      defaultSortBy: [['id', 'ASC']],
+      defaultLimit: 10,
+      maxLimit: 100,
+    });
+  }
 }

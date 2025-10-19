@@ -7,7 +7,8 @@ import {
   Param,
   Delete,
   ParseIntPipe,
-  NotFoundException,
+  HttpCode,
+  HttpStatus,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -57,10 +58,10 @@ export class DepartmentsController {
     return this.departmentsService.create(createDepartmentDto);
   }
 
+  // @Serialize(DepartmentDto) removed to allow pagination metadata, i'll add a custom interceptor later
   @ApiOperation({ summary: 'Get all departments' })
   @ApiOkResponse({
     description: 'Departments retrieved successfully',
-    type: [DepartmentDto],
   })
   @ApiUnauthorizedResponse({ description: 'Not authenticated' })
   @Get()
@@ -72,12 +73,13 @@ export class DepartmentsController {
   @ApiOperation({ summary: 'Get all departments with employee count' })
   @ApiOkResponse({
     description: 'Departments with employee count retrieved successfully',
-    type: [DepartmentDto],
   })
   @ApiUnauthorizedResponse({ description: 'Not authenticated' })
   @Get('employee-count')
-  async getAllDepartmentsWithEmployeeCount(): Promise<Department[]> {
-    return this.departmentsService.findAllWithEmployeeCount();
+  async getAllDepartmentsWithEmployeeCount(
+    @Paginate() query: PaginateQuery, // FIXED: Added pagination parameter
+  ): Promise<Paginated<Department>> {
+    return this.departmentsService.findAllWithEmployeeCount(query);
   }
 
   @Serialize(DepartmentDto)
@@ -90,37 +92,7 @@ export class DepartmentsController {
   @ApiUnauthorizedResponse({ description: 'Not authenticated' })
   @Get(':id')
   async findOne(@Param('id', ParseIntPipe) id: number): Promise<Department> {
-    const department = await this.departmentsService.findById(id);
-    if (!department) {
-      throw new NotFoundException(`Department with ID ${id} not found`);
-    }
-    return department;
-  }
-
-  @ApiOperation({ summary: 'Get department with all employees' })
-  @ApiOkResponse({
-    description: 'Department with employees retrieved successfully',
-  })
-  @ApiNotFoundResponse({ description: 'Department not found' })
-  @ApiUnauthorizedResponse({ description: 'Not authenticated' })
-  @Get(':id/employees')
-  async getDepartmentWithEmployees(
-    @Param('id', ParseIntPipe) id: number,
-  ): Promise<Department> {
-    return this.departmentsService.findOneWithEmployees(id);
-  }
-
-  @ApiOperation({ summary: 'Get department with active employees only' })
-  @ApiOkResponse({
-    description: 'Department with active employees retrieved successfully',
-  })
-  @ApiNotFoundResponse({ description: 'Department not found' })
-  @ApiUnauthorizedResponse({ description: 'Not authenticated' })
-  @Get(':id/active-employees')
-  async getDepartmentWithActiveEmployees(
-    @Param('id', ParseIntPipe) id: number,
-  ): Promise<Department> {
-    return this.departmentsService.findOneWithActiveEmployees(id);
+    return this.departmentsService.findById(id);
   }
 
   @Serialize(DepartmentDto)
@@ -152,8 +124,9 @@ export class DepartmentsController {
   @ApiUnauthorizedResponse({ description: 'Not authenticated' })
   @ApiForbiddenResponse({ description: 'Admin access required' })
   @Roles(UserRole.ADMIN)
+  @HttpCode(HttpStatus.NO_CONTENT)
   @Delete(':id')
-  async remove(@Param('id', ParseIntPipe) id: number): Promise<string> {
-    return this.departmentsService.remove(id);
+  async remove(@Param('id', ParseIntPipe) id: number): Promise<void> {
+    await this.departmentsService.remove(id);
   }
 }

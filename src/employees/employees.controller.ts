@@ -37,7 +37,7 @@ import type { PaginateQuery } from 'nestjs-paginate';
 @ApiBearerAuth()
 @Controller('employees')
 export class EmployeesController {
-  constructor(private readonly employeesService: EmployeesService) {}
+  constructor(private readonly employeesService: EmployeesService) { }
 
   @ApiOperation({ summary: 'Create a new employee (Admin only)' })
   @ApiCreatedResponse({
@@ -87,10 +87,10 @@ export class EmployeesController {
     return this.employeesService.getStatistics();
   }
 
+  @Serialize(EmployeeDto)
   @ApiOperation({ summary: 'Get all employees with pagination' })
   @ApiOkResponse({
     description: 'Employees retrieved successfully',
-    type: [EmployeeDto],
   })
   @ApiUnauthorizedResponse({ description: 'Not authenticated' })
   @Get()
@@ -101,7 +101,6 @@ export class EmployeesController {
   @ApiOperation({ summary: 'Get employees by department' })
   @ApiOkResponse({
     description: 'Employees in department retrieved successfully',
-    type: [EmployeeDto],
   })
   @ApiNotFoundResponse({ description: 'Department not found' })
   @ApiUnauthorizedResponse({ description: 'Not authenticated' })
@@ -109,21 +108,9 @@ export class EmployeesController {
   @Get('department/:departmentId')
   findByDepartment(
     @Param('departmentId', ParseIntPipe) departmentId: number,
-  ): Promise<Employee[]> {
-    return this.employeesService.findByDepartment(departmentId);
-  }
-
-  @ApiOperation({ summary: 'Get employee by ID' })
-  @ApiOkResponse({
-    description: 'Employee found successfully',
-    type: EmployeeDto,
-  })
-  @ApiNotFoundResponse({ description: 'Employee not found' })
-  @ApiUnauthorizedResponse({ description: 'Not authenticated' })
-  @Serialize(EmployeeDto)
-  @Get(':id')
-  findOne(@Param('id', ParseIntPipe) id: number): Promise<Employee> {
-    return this.employeesService.findById(id);
+    @Paginate() query: PaginateQuery,
+  ): Promise<Paginated<Employee>> {
+    return this.employeesService.findByDepartment(departmentId, query);
   }
 
   @ApiOperation({ summary: 'Get employee with department details' })
@@ -141,10 +128,23 @@ export class EmployeesController {
     return this.employeesService.findOneWithDepartment(id);
   }
 
+  @ApiOperation({ summary: 'Get employee by ID' })
+  @ApiOkResponse({
+    description: 'Employee found successfully',
+    type: EmployeeDto,
+  })
+  @ApiNotFoundResponse({ description: 'Employee not found' })
+  @ApiUnauthorizedResponse({ description: 'Not authenticated' })
+  @Serialize(EmployeeDto)
+  @Get(':id')
+  findOne(@Param('id', ParseIntPipe) id: number): Promise<Employee> {
+    return this.employeesService.findById(id);
+  }
+
   @ApiOperation({ summary: 'Update employee (Admin only)' })
   @ApiOkResponse({
     description: 'Employee successfully updated',
-    type: EmployeeDto,
+    type: Employee,
   })
   @ApiNotFoundResponse({ description: 'Employee not found' })
   @ApiBadRequestResponse({ description: 'Invalid input data' })
@@ -157,7 +157,7 @@ export class EmployeesController {
   update(
     @Param('id', ParseIntPipe) id: number,
     @Body() updateEmployeeDto: UpdateEmployeeDto,
-  ): Promise<EmployeeDto> {
+  ): Promise<Employee> {
     return this.employeesService.update(id, updateEmployeeDto);
   }
 
