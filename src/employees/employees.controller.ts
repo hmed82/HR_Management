@@ -87,20 +87,10 @@ export class EmployeesController {
     return this.employeesService.getStatistics();
   }
 
-  @Serialize(EmployeeDto)
-  @ApiOperation({ summary: 'Get all employees with pagination' })
+  @ApiOperation({ summary: 'Get employees by department (paginated)' })
   @ApiOkResponse({
-    description: 'Employees retrieved successfully',
-  })
-  @ApiUnauthorizedResponse({ description: 'Not authenticated' })
-  @Get()
-  findAll(@Paginate() query: PaginateQuery): Promise<Paginated<Employee>> {
-    return this.employeesService.findAll(query);
-  }
-
-  @ApiOperation({ summary: 'Get employees by department' })
-  @ApiOkResponse({
-    description: 'Employees in department retrieved successfully',
+    description: 'Employees in department retrieved successfully. Returns paginated result with data, meta (pagination info), and links.',
+    type: Paginated<EmployeeDto>,
   })
   @ApiNotFoundResponse({ description: 'Department not found' })
   @ApiUnauthorizedResponse({ description: 'Not authenticated' })
@@ -111,6 +101,18 @@ export class EmployeesController {
     @Paginate() query: PaginateQuery,
   ): Promise<Paginated<Employee>> {
     return this.employeesService.findByDepartment(departmentId, query);
+  }
+
+  @ApiOperation({ summary: 'Get all employees (paginated)' })
+  @ApiOkResponse({
+    description: 'Employees retrieved successfully. Returns paginated result with data, meta (pagination info), and links.',
+    type: Paginated<EmployeeDto>,
+  })
+  @ApiUnauthorizedResponse({ description: 'Not authenticated' })
+  @Serialize(EmployeeDto)
+  @Get()
+  findAll(@Paginate() query: PaginateQuery): Promise<Paginated<Employee>> {
+    return this.employeesService.findAll(query);
   }
 
   @ApiOperation({ summary: 'Get employee with department details' })
@@ -144,7 +146,7 @@ export class EmployeesController {
   @ApiOperation({ summary: 'Update employee (Admin only)' })
   @ApiOkResponse({
     description: 'Employee successfully updated',
-    type: Employee,
+    type: EmployeeDto,
   })
   @ApiNotFoundResponse({ description: 'Employee not found' })
   @ApiBadRequestResponse({ description: 'Invalid input data' })
@@ -152,7 +154,6 @@ export class EmployeesController {
   @ApiUnauthorizedResponse({ description: 'Not authenticated' })
   @ApiForbiddenResponse({ description: 'Admin access required' })
   @Roles(UserRole.ADMIN)
-  @Serialize(EmployeeDto)
   @Patch(':id')
   update(
     @Param('id', ParseIntPipe) id: number,

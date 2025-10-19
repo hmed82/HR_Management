@@ -37,12 +37,12 @@ import type { PaginateQuery } from 'nestjs-paginate';
 import { User } from '@/users/entities/user.entity';
 
 @ApiTags('Users')
+@Serialize(UserDto)
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) { }
 
-  @Roles(UserRole.ADMIN) // Global guards already applied
-  @Serialize(UserDto)
+  @Roles(UserRole.ADMIN)
   @Post()
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Create a new user (Admin only)' })
@@ -59,8 +59,6 @@ export class UsersController {
     return await this.usersService.create(createUserDto);
   }
 
-  // Current user's profile
-  @Serialize(UserDto)
   @Get('me')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get current user profile' })
@@ -74,12 +72,12 @@ export class UsersController {
   }
 
   @Roles(UserRole.ADMIN)
-  @Serialize(UserDto)
   @Get()
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Get all users (Admin only)' })
+  @ApiOperation({ summary: 'Get all users (Admin only, paginated)' })
   @ApiOkResponse({
-    description: 'Users retrieved successfully',
+    description: 'Users retrieved successfully. Returns paginated result with data, meta (pagination info), and links.',
+    type: Paginated<UserDto>,
   })
   @ApiUnauthorizedResponse({ description: 'Not authenticated' })
   @ApiForbiddenResponse({ description: 'Admin access required' })
@@ -89,11 +87,9 @@ export class UsersController {
     return this.usersService.findAll(query);
   }
 
-  // User or admin can access specific user
-  @Serialize(UserDto)
   @Get('/:id')
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Get user by ID' })
+  @ApiOperation({ summary: 'Get user by ID (Admin or own profile)' })
   @ApiOkResponse({ description: 'User found successfully', type: UserDto })
   @ApiNotFoundResponse({ description: 'User not found' })
   @ApiUnauthorizedResponse({ description: 'Not authenticated' })
@@ -108,8 +104,6 @@ export class UsersController {
     return this.usersService.findById(id);
   }
 
-  // User or admin can update
-  @Serialize(UserDto)
   @Patch('/:id')
   @ApiBearerAuth()
   @ApiOperation({
@@ -126,7 +120,8 @@ export class UsersController {
     @Body() updateUserDto: UpdateUserDto,
     @CurrentUser() user: JwtUser,
   ): Promise<User> {
-    if (user.role !== UserRole.ADMIN && user.id !== id) { //i gotta make a guard for this later
+    // TODO: Create a custom guard/policy for this authorization logic instead of duplicating
+    if (user.role !== UserRole.ADMIN && user.id !== id) {
       throw new ForbiddenException('You can only update your own profile');
     }
     return this.usersService.update(id, updateUserDto);

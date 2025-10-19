@@ -35,11 +35,11 @@ import type { PaginateQuery } from 'nestjs-paginate';
 
 @ApiTags('Departments')
 @ApiBearerAuth()
+@Serialize(DepartmentDto)
 @Controller('departments')
 export class DepartmentsController {
   constructor(private readonly departmentsService: DepartmentsService) { }
 
-  @Serialize(DepartmentDto)
   @ApiOperation({ summary: 'Create a new department (Admin only)' })
   @ApiResponse({
     status: 201,
@@ -58,10 +58,23 @@ export class DepartmentsController {
     return this.departmentsService.create(createDepartmentDto);
   }
 
-  // @Serialize(DepartmentDto) removed to allow pagination metadata, i'll add a custom interceptor later
-  @ApiOperation({ summary: 'Get all departments' })
+  @ApiOperation({ summary: 'Get all departments with employee count (paginated)' })
   @ApiOkResponse({
-    description: 'Departments retrieved successfully',
+    description: 'Departments with employee count retrieved successfully. Returns paginated result with data, meta (pagination info), and links.',
+    type: Paginated<DepartmentDto>,
+  })
+  @ApiUnauthorizedResponse({ description: 'Not authenticated' })
+  @Get('employee-count')
+  async getAllDepartmentsWithEmployeeCount(
+    @Paginate() query: PaginateQuery,
+  ): Promise<Paginated<Department>> {
+    return this.departmentsService.findAllWithEmployeeCount(query);
+  }
+
+  @ApiOperation({ summary: 'Get all departments (paginated)' })
+  @ApiOkResponse({
+    description: 'Departments retrieved successfully. Returns paginated result with data, meta (pagination info), and links.',
+    type: Paginated<DepartmentDto>,
   })
   @ApiUnauthorizedResponse({ description: 'Not authenticated' })
   @Get()
@@ -69,20 +82,6 @@ export class DepartmentsController {
     return this.departmentsService.findAll(query);
   }
 
-  @Serialize(DepartmentDto)
-  @ApiOperation({ summary: 'Get all departments with employee count' })
-  @ApiOkResponse({
-    description: 'Departments with employee count retrieved successfully',
-  })
-  @ApiUnauthorizedResponse({ description: 'Not authenticated' })
-  @Get('employee-count')
-  async getAllDepartmentsWithEmployeeCount(
-    @Paginate() query: PaginateQuery, // FIXED: Added pagination parameter
-  ): Promise<Paginated<Department>> {
-    return this.departmentsService.findAllWithEmployeeCount(query);
-  }
-
-  @Serialize(DepartmentDto)
   @ApiOperation({ summary: 'Get department by ID' })
   @ApiOkResponse({
     description: 'Department found successfully',
@@ -95,7 +94,6 @@ export class DepartmentsController {
     return this.departmentsService.findById(id);
   }
 
-  @Serialize(DepartmentDto)
   @ApiOperation({ summary: 'Update department (Admin only)' })
   @ApiOkResponse({
     description: 'Department successfully updated',

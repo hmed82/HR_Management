@@ -20,7 +20,7 @@ export function Serialize(dto: ClassType) {
 }
 
 export class SerializeInterceptor implements NestInterceptor {
-  constructor(private readonly dto: ClassType) {}
+  constructor(private readonly dto: ClassType) { }
 
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
     // Code to run before the request is handled by the controller
@@ -31,10 +31,42 @@ export class SerializeInterceptor implements NestInterceptor {
           return null;
         }
 
+        // Check if response is a paginated result from nestjs-paginate
+        // Paginated responses have: { data: [...], meta: {...}, links: {...} }
+        if (this.isPaginatedResponse(data)) {
+          return {
+            ...data, // Preserve meta, links, and other properties
+            data: plainToInstance(this.dto, data.data, {
+              excludeExtraneousValues: true,
+            }), // Transform only the data array
+          };
+        }
+
+        // Check if response is an array (for non-paginated list endpoints)
+        if (Array.isArray(data)) {
+          return plainToInstance(this.dto, data, {
+            excludeExtraneousValues: true,
+          });
+        }
+
+        // For single entity responses
         return plainToInstance(this.dto, data, {
           excludeExtraneousValues: true,
         });
       }),
+    );
+  }
+
+  // Helper method to detect nestjs-paginate response structure
+  //  Checks for presence of 'data', 'meta', and 'links' properties
+  private isPaginatedResponse(data: any): boolean {
+    return (
+      data &&
+      typeof data === 'object' &&
+      'data' in data &&
+      'meta' in data &&
+      'links' in data &&
+      Array.isArray(data.data)
     );
   }
 }
