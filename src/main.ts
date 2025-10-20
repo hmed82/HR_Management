@@ -47,10 +47,19 @@ async function bootstrap() {
   //   maxAge: Number(configService.get<number>('CORS_MAX_AGE')) ?? 3600,
   // });
 
-  const hardCodedPort: number = 3000;
-  const port = Number(configService.get<number>('PORT')) ?? hardCodedPort;
-
-  await app.listen(port);
-  console.log(`Application is running on: http://localhost:${port}`);
+  const port = Number(configService.get<number>('PORT'));
+  if (port) {
+    await app.listen(port);
+    console.log(`Application is running on: http://localhost:${port}`);
+  }
+  else {
+    const hardCodedPort: number = 3000;
+    console.warn(
+      `PORT is not set or invalid in environment variables. Falling back to hardcoded port ${hardCodedPort}.`,
+    );
+    await app.listen(hardCodedPort);
+    console.log(`Application is running on: http://localhost:${hardCodedPort}`);
+  }
 }
+
 bootstrap();

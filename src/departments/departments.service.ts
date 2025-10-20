@@ -9,14 +9,19 @@ import { UpdateDepartmentDto } from '@/departments/dto/update-department.dto';
 import { Department } from '@/departments/entities/department.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { PaginateQuery, paginate, Paginated, FilterOperator } from 'nestjs-paginate';
+import {
+  PaginateQuery,
+  paginate,
+  Paginated,
+  FilterOperator,
+} from 'nestjs-paginate';
 
 @Injectable()
 export class DepartmentsService {
   constructor(
     @InjectRepository(Department)
     private readonly departmentsRepo: Repository<Department>,
-  ) { }
+  ) {}
 
   async create(createDepartmentDto: CreateDepartmentDto): Promise<Department> {
     const { name, description } = createDepartmentDto;
@@ -66,7 +71,8 @@ export class DepartmentsService {
   ): Promise<Department> {
     const department = await this.findById(id);
 
-    if ( // I am using this piece of code elsewhere, maybe refactor it later
+    if (
+      // I am using this piece of code elsewhere, maybe refactor it later
       updateDepartmentDto.name &&
       updateDepartmentDto.name !== department.name
     ) {
@@ -126,7 +132,9 @@ export class DepartmentsService {
       .getMany();
   }
 
-  async findAllWithEmployeeCount(query: PaginateQuery): Promise<Paginated<Department>> {
+  async findAllWithEmployeeCount(
+    query: PaginateQuery,
+  ): Promise<Paginated<Department>> {
     // Create query builder with employee count
     const queryBuilder = this.departmentsRepo
       .createQueryBuilder('dept')

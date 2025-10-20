@@ -89,7 +89,8 @@ export class EmployeesController {
 
   @ApiOperation({ summary: 'Get employees by department (paginated)' })
   @ApiOkResponse({
-    description: 'Employees in department retrieved successfully. Returns paginated result with data, meta (pagination info), and links.',
+    description:
+      'Employees in department retrieved successfully. Returns paginated result with data, meta (pagination info), and links.',
     type: Paginated<EmployeeDto>,
   })
   @ApiNotFoundResponse({ description: 'Department not found' })
@@ -105,7 +106,8 @@ export class EmployeesController {
 
   @ApiOperation({ summary: 'Get all employees (paginated)' })
   @ApiOkResponse({
-    description: 'Employees retrieved successfully. Returns paginated result with data, meta (pagination info), and links.',
+    description:
+      'Employees retrieved successfully. Returns paginated result with data, meta (pagination info), and links.',
     type: Paginated<EmployeeDto>,
   })
   @ApiUnauthorizedResponse({ description: 'Not authenticated' })

@@ -2,13 +2,13 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule } from '@nestjs/config';
 // import { ConfigService } from '@nestjs/common';
-import { UsersModule } from './users/users.module';
+import { UsersModule } from '@/users/users.module';
 import * as Joi from 'joi';
 import { join } from 'path';
-import { AuthModule } from './auth/auth.module';
-import { DepartmentsModule } from './departments/departments.module';
-import { EmployeesModule } from './employees/employees.module';
-import { TimeEntriesModule } from './time-entries/time-entries.module';
+import { AuthModule } from '@/auth/auth.module';
+import { DepartmentsModule } from '@/departments/departments.module';
+import { EmployeesModule } from '@/employees/employees.module';
+import { TimeEntriesModule } from '@/time-entries/time-entries.module';
 
 @Module({
   imports: [

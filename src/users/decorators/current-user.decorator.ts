@@ -1,8 +1,9 @@
 import { createParamDecorator, ExecutionContext } from '@nestjs/common';
+import { UserRole } from '@/users/enums/user-role.enum';
 
 export interface JwtUser {
   id: number;
-  role: string;
+  role: UserRole;
   isActive: boolean;
 }
 

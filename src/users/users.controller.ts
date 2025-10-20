@@ -40,7 +40,7 @@ import { User } from '@/users/entities/user.entity';
 @Serialize(UserDto)
 @Controller('users')
 export class UsersController {
-  constructor(private readonly usersService: UsersService) { }
+  constructor(private readonly usersService: UsersService) {}
 
   @Roles(UserRole.ADMIN)
   @Post()
@@ -76,14 +76,13 @@ export class UsersController {
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get all users (Admin only, paginated)' })
   @ApiOkResponse({
-    description: 'Users retrieved successfully. Returns paginated result with data, meta (pagination info), and links.',
+    description:
+      'Users retrieved successfully. Returns paginated result with data, meta (pagination info), and links.',
     type: Paginated<UserDto>,
   })
   @ApiUnauthorizedResponse({ description: 'Not authenticated' })
   @ApiForbiddenResponse({ description: 'Admin access required' })
-  async findAll(
-    @Paginate() query: PaginateQuery,
-  ): Promise<Paginated<User>> {
+  async findAll(@Paginate() query: PaginateQuery): Promise<Paginated<User>> {
     return this.usersService.findAll(query);
   }
 

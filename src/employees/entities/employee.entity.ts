@@ -3,11 +3,13 @@ import {
   PrimaryGeneratedColumn,
   Column,
   ManyToOne,
+  OneToMany,
   JoinColumn,
   CreateDateColumn,
   UpdateDateColumn,
 } from 'typeorm';
 import { Department } from '@/departments/entities/department.entity';
+import { TimeEntry } from '@/time-entries/entities/time-entry.entity';
 
 @Entity('employees')
 export class Employee {
@@ -39,30 +41,18 @@ export class Employee {
   @JoinColumn({ name: 'departmentId' })
   department: Department;
 
-  // For easier acces
+  // For easier access
   @Column({ nullable: true })
   departmentId: number;
 
-  // *************** i will add this functionality later ***************
-  // // Self-referential: Employee can have a manager
-  // @ManyToOne(() => Employee, (employee) => employee.subordinates, { nullable: true })
-  // @JoinColumn({ name: 'managerId' })
-  // manager: Employee;
-
-  // // For easier acces
-  // @Column({ nullable: true })
-  // managerId: number;
-
-  // // One-to-many: Employee can manage other employees
-  // @ManyToOne(() => Employee, (employee) => employee.manager)
-  // subordinates: Employee[];
-
-  // *******************************************************************
+  // Relationship: Employee can have multiple time entries
+  @OneToMany(() => TimeEntry, (timeEntry) => timeEntry.employee)
+  timeEntries: TimeEntry[];
 
   @Column({ type: 'boolean', default: true })
   isActive: boolean;
 
-  // ********************* for prod when i swich back to mysql or postgres *********************
+  // ********************* for prod when i switch back to mysql or postgres *********************
 
   // @CreateDateColumn({ type: 'timestamp' })
   // createdAt: Date;

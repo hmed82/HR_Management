@@ -38,7 +38,7 @@ import type { PaginateQuery } from 'nestjs-paginate';
 @Serialize(DepartmentDto)
 @Controller('departments')
 export class DepartmentsController {
-  constructor(private readonly departmentsService: DepartmentsService) { }
+  constructor(private readonly departmentsService: DepartmentsService) {}
 
   @ApiOperation({ summary: 'Create a new department (Admin only)' })
   @ApiResponse({
@@ -58,9 +58,12 @@ export class DepartmentsController {
     return this.departmentsService.create(createDepartmentDto);
   }
 
-  @ApiOperation({ summary: 'Get all departments with employee count (paginated)' })
+  @ApiOperation({
+    summary: 'Get all departments with employee count (paginated)',
+  })
   @ApiOkResponse({
-    description: 'Departments with employee count retrieved successfully. Returns paginated result with data, meta (pagination info), and links.',
+    description:
+      'Departments with employee count retrieved successfully. Returns paginated result with data, meta (pagination info), and links.',
     type: Paginated<DepartmentDto>,
   })
   @ApiUnauthorizedResponse({ description: 'Not authenticated' })
@@ -73,7 +76,8 @@ export class DepartmentsController {
 
   @ApiOperation({ summary: 'Get all departments (paginated)' })
   @ApiOkResponse({
-    description: 'Departments retrieved successfully. Returns paginated result with data, meta (pagination info), and links.',
+    description:
+      'Departments retrieved successfully. Returns paginated result with data, meta (pagination info), and links.',
     type: Paginated<DepartmentDto>,
   })
   @ApiUnauthorizedResponse({ description: 'Not authenticated' })

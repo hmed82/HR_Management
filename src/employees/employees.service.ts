@@ -8,7 +8,12 @@ import { Repository } from 'typeorm';
 import { CreateEmployeeDto } from '@/employees/dto/create-employee.dto';
 import { UpdateEmployeeDto } from '@/employees/dto/update-employee.dto';
 import { Employee } from '@/employees/entities/employee.entity';
-import { PaginateQuery, paginate, Paginated, FilterOperator } from 'nestjs-paginate';
+import {
+  PaginateQuery,
+  paginate,
+  Paginated,
+  FilterOperator,
+} from 'nestjs-paginate';
 import { DepartmentsService } from '@/departments/departments.service';
 
 export interface EmployeeStatistics {
@@ -56,7 +61,14 @@ export class EmployeesService {
 
   async findAll(query: PaginateQuery): Promise<Paginated<Employee>> {
     return paginate(query, this.employeesRepo, {
-      sortableColumns: ['id', 'firstName', 'lastName', 'email', 'hireDate', 'createdAt'],
+      sortableColumns: [
+        'id',
+        'firstName',
+        'lastName',
+        'email',
+        'hireDate',
+        'createdAt',
+      ],
       searchableColumns: ['firstName', 'lastName', 'email'],
       filterableColumns: {
         departmentId: [FilterOperator.EQ],
@@ -92,7 +104,10 @@ export class EmployeesService {
     return employee;
   }
 
-  async findByDepartment(departmentId: number, query: PaginateQuery): Promise<Paginated<Employee>> {
+  async findByDepartment(
+    departmentId: number,
+    query: PaginateQuery,
+  ): Promise<Paginated<Employee>> {
     await this.departmentsService.findById(departmentId);
 
     const queryBuilder = this.employeesRepo
@@ -100,7 +115,14 @@ export class EmployeesService {
       .where('employee.departmentId = :departmentId', { departmentId });
 
     return paginate(query, queryBuilder, {
-      sortableColumns: ['id', 'firstName', 'lastName', 'email', 'hireDate', 'createdAt'],
+      sortableColumns: [
+        'id',
+        'firstName',
+        'lastName',
+        'email',
+        'hireDate',
+        'createdAt',
+      ],
       searchableColumns: ['firstName', 'lastName', 'email'],
       filterableColumns: {
         isActive: [FilterOperator.EQ],

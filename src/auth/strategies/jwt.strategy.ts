@@ -15,7 +15,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     if (!jwtSecret) {
       throw new Error('JWT_SECRET must be defined in environment variables');
     }
-    const loggedinUser = 'oggedinUser';
+
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(), // Extracts token from Authorization: Bearer <token> header
       ignoreExpiration: false,

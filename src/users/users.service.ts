@@ -9,7 +9,12 @@ import { UpdateUserDto } from '@/users/dto/update-user.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { HashUtil } from '@/common/utils/hash.util';
-import { PaginateQuery, paginate, Paginated, FilterOperator } from 'nestjs-paginate';
+import {
+  PaginateQuery,
+  paginate,
+  Paginated,
+  FilterOperator,
+} from 'nestjs-paginate';
 
 @Injectable()
 export class UsersService {
