@@ -51,8 +51,7 @@ async function bootstrap() {
   if (port) {
     await app.listen(port);
     console.log(`Application is running on: http://localhost:${port}`);
-  }
-  else {
+  } else {
     const hardCodedPort: number = 3000;
     console.warn(
       `PORT is not set or invalid in environment variables. Falling back to hardcoded port ${hardCodedPort}.`,

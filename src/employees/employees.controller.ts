@@ -37,7 +37,7 @@ import type { PaginateQuery } from 'nestjs-paginate';
 @ApiBearerAuth()
 @Controller('employees')
 export class EmployeesController {
-  constructor(private readonly employeesService: EmployeesService) { }
+  constructor(private readonly employeesService: EmployeesService) {}
 
   @ApiOperation({ summary: 'Create a new employee (Admin only)' })
   @ApiCreatedResponse({

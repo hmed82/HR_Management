@@ -33,7 +33,7 @@ export class EmployeesService {
     @InjectRepository(Employee)
     private readonly employeesRepo: Repository<Employee>,
     private readonly departmentsService: DepartmentsService,
-  ) { }
+  ) {}
 
   async create(createEmployeeDto: CreateEmployeeDto): Promise<Employee> {
     const { email, departmentId, ...rest } = createEmployeeDto;
