@@ -27,8 +27,8 @@ export class TimeEntry {
   @Column()
   employeeId: number;
 
-  @Column()
-  date: string; // YYYY-MM-DD
+  @Column({ type: 'date' })
+  date: Date;
 
   // Spec uses clockIn / clockOut
   @Column({ type: 'time' })
