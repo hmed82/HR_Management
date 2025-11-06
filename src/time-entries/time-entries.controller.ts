@@ -47,6 +47,7 @@ import { TimeEntry } from '@/time-entries/entities/time-entry.entity';
 import { Roles } from '@/auth/decorators/roles.decorator';
 import { UserRole } from '@/users/enums/user-role.enum';
 import { Serialize } from '@/common/interceptors/serialize.interceptor';
+import { TimeEntryStatus } from '@/time-entries/enum/time-entry-status.enum';
 
 @ApiTags('Time Entries')
 @ApiBearerAuth()
@@ -55,7 +56,7 @@ export class TimeEntriesController {
   constructor(
     private readonly timeEntriesService: TimeEntriesService,
     private readonly excelParserService: ExcelParserService,
-  ) { }
+  ) {}
 
   @ApiOperation({ summary: 'Create a time entry (Admin only)' })
   @ApiCreatedResponse({
@@ -63,7 +64,9 @@ export class TimeEntriesController {
     type: TimeEntryDto,
   })
   @ApiBadRequestResponse({ description: 'Invalid input data' })
-  @ApiConflictResponse({ description: 'Time entry already exists for this date' })
+  @ApiConflictResponse({
+    description: 'Time entry already exists for this date',
+  })
   @ApiNotFoundResponse({ description: 'Employee not found' })
   @ApiUnauthorizedResponse({ description: 'Not authenticated' })
   @ApiForbiddenResponse({ description: 'Admin access required' })
@@ -87,7 +90,7 @@ export class TimeEntriesController {
           items: {
             type: 'object',
             properties: {
-              status: { type: 'string' },
+              status: { type: 'string', enum: Object.values(TimeEntryStatus) },
               count: { type: 'number' },
             },
           },
@@ -120,9 +123,9 @@ export class TimeEntriesController {
     const buffer = this.excelParserService.generateTemplate();
 
     const filename = `time-entries-template-${new Date().toISOString().split('T')[0]}.xlsx`;
-    // YYYY-MM-DD split because ':' is not allowed in filenames on Windows the original name was gonna be like this: 
-    // time-entries-template-2025-10-15T12:34:56.789Z.xlsx 
-    // but now it's 
+    // YYYY-MM-DD split because ':' is not allowed in filenames on Windows the original name was gonna be like this:
+    // time-entries-template-2025-10-15T12:34:56.789Z.xlsx
+    // but now it's
     // time-entries-template-2025-10-15.xlsx
 
     res.setHeader(
@@ -153,7 +156,8 @@ export class TimeEntriesController {
     example: '2025-10-31',
   })
   @ApiOkResponse({
-    description: 'Time entries retrieved successfully. Returns paginated result with data, meta (pagination info), and links.',
+    description:
+      'Time entries retrieved successfully. Returns paginated result with data, meta (pagination info), and links.',
     type: Paginated<TimeEntryDto>,
   })
   @ApiBadRequestResponse({ description: 'Invalid date format' })
@@ -168,9 +172,7 @@ export class TimeEntriesController {
     // Validate date format
     const dateRegex = /^\d{4}-\d{2}-\d{2}$/; // YYYY-MM-DD format
     if (!dateRegex.test(startDate) || !dateRegex.test(endDate)) {
-      throw new BadRequestException(
-        'Invalid date format. Expected YYYY-MM-DD',
-      );
+      throw new BadRequestException('Invalid date format. Expected YYYY-MM-DD');
     }
 
     return this.timeEntriesService.findByDateRange(startDate, endDate, query);
@@ -178,7 +180,8 @@ export class TimeEntriesController {
 
   @ApiOperation({ summary: 'Get time entries for a specific employee' })
   @ApiOkResponse({
-    description: 'Time entries retrieved successfully. Returns paginated result with data, meta (pagination info), and links.',
+    description:
+      'Time entries retrieved successfully. Returns paginated result with data, meta (pagination info), and links.',
     type: Paginated<TimeEntryDto>,
   })
   @ApiNotFoundResponse({ description: 'Employee not found' })
@@ -263,8 +266,9 @@ export class TimeEntriesController {
     }
 
     // Parse the Excel file
-    const timeEntries =
-      await this.excelParserService.parseExcelFile(file.buffer);
+    const timeEntries = await this.excelParserService.parseExcelFile(
+      file.buffer,
+    );
 
     // Bulk import with transaction
     const result = await this.timeEntriesService.bulkImport(timeEntries);
@@ -277,7 +281,8 @@ export class TimeEntriesController {
 
   @ApiOperation({ summary: 'Get all time entries (paginated)' })
   @ApiOkResponse({
-    description: 'Time entries retrieved successfully. Returns paginated result with data, meta (pagination info), and links.',
+    description:
+      'Time entries retrieved successfully. Returns paginated result with data, meta (pagination info), and links.',
     type: Paginated<TimeEntryDto>,
   })
   @ApiQuery({
@@ -337,7 +342,9 @@ export class TimeEntriesController {
   })
   @ApiNotFoundResponse({ description: 'Time entry not found' })
   @ApiBadRequestResponse({ description: 'Invalid input data' })
-  @ApiConflictResponse({ description: 'Time entry already exists for this date' })
+  @ApiConflictResponse({
+    description: 'Time entry already exists for this date',
+  })
   @ApiUnauthorizedResponse({ description: 'Not authenticated' })
   @ApiForbiddenResponse({ description: 'Admin access required' })
   @Roles(UserRole.ADMIN)

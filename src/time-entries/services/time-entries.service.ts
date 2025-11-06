@@ -30,7 +30,7 @@ export class TimeEntriesService {
     private readonly timeEntryRepo: Repository<TimeEntry>,
     private readonly employeesService: EmployeesService,
     private readonly dataSource: DataSource,
-  ) { }
+  ) {}
 
   async create(createTimeEntryDto: CreateTimeEntryDto): Promise<TimeEntry> {
     const { employeeId, date, clockIn, clockOut } = createTimeEntryDto;

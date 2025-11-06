@@ -266,15 +266,9 @@ export class ExcelParserService {
     const data = [
       {
         'Employee ID': 1,
-        Date: '2025-10-22',
-        'Clock In': '08:30:00',
-        'Clock Out': '17:30:00',
-      },
-      {
-        'Employee ID': 2,
-        Date: '2025-10-22',
+        Date: '2025-11-06',
         'Clock In': '09:00:00',
-        'Clock Out': '18:00:00',
+        'Clock Out': '17:30:00',
       },
     ];
 
@@ -290,7 +284,6 @@ export class ExcelParserService {
 
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, 'Attendance');
-
     return XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
   }
 }
