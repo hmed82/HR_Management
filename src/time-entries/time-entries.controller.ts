@@ -77,7 +77,7 @@ export class TimeEntriesController {
     return this.timeEntriesService.create(createDto);
   }
   // TODO:
-  // make the return into an interface to use here and in the service
+  // make the return into an interface to use here and in the service (maybe)
   @ApiOperation({ summary: 'Get time entry statistics (Admin only)' })
   @ApiOkResponse({
     description: 'Statistics retrieved successfully',
@@ -128,6 +128,10 @@ export class TimeEntriesController {
     // but now it's
     // time-entries-template-2025-10-15.xlsx
 
+    // if (!buffer) {
+    //   console.error('Failed to generate Excel template in the timeentries controller at the downloadTemplate method the buffer is null');
+    //   throw new BadRequestException('Could not generate Excel template, please try again later');
+    // }
     res.setHeader(
       'Content-Type',
       'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
@@ -357,18 +361,6 @@ export class TimeEntriesController {
     return this.timeEntriesService.update(id, updateDto);
   }
 
-  @ApiOperation({ summary: 'Delete a time entry (Admin only)' })
-  @ApiNoContentResponse({ description: 'Time entry deleted successfully' })
-  @ApiNotFoundResponse({ description: 'Time entry not found' })
-  @ApiUnauthorizedResponse({ description: 'Not authenticated' })
-  @ApiForbiddenResponse({ description: 'Admin access required' })
-  @Roles(UserRole.ADMIN)
-  @HttpCode(HttpStatus.NO_CONTENT)
-  @Delete(':id')
-  async delete(@Param('id', ParseIntPipe) id: number): Promise<void> {
-    await this.timeEntriesService.delete(id);
-  }
-
   @ApiOperation({
     summary: 'Bulk delete time entries (Admin only)',
     description: 'Delete multiple time entries by their IDs',
@@ -413,5 +405,19 @@ export class TimeEntriesController {
     }
 
     return await this.timeEntriesService.bulkDelete(ids);
+  }
+
+  // NOTE: this must stay BELOW the "bulk" route, otherwise
+  // DELETE /time-entries/bulk would be captured by ":id" and fail ParseIntPipe
+  @ApiOperation({ summary: 'Delete a time entry (Admin only)' })
+  @ApiNoContentResponse({ description: 'Time entry deleted successfully' })
+  @ApiNotFoundResponse({ description: 'Time entry not found' })
+  @ApiUnauthorizedResponse({ description: 'Not authenticated' })
+  @ApiForbiddenResponse({ description: 'Admin access required' })
+  @Roles(UserRole.ADMIN)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @Delete(':id')
+  async delete(@Param('id', ParseIntPipe) id: number): Promise<void> {
+    await this.timeEntriesService.delete(id);
   }
 }

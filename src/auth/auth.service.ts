@@ -1,11 +1,14 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
+import { ConfigService } from '@nestjs/config';
 import { UsersService } from '../users/users.service';
 import { LoginDto } from './dto/login.dto';
 import { HashUtil } from '../common/utils/hash.util';
 import { CreateUserDto } from '../users/dto/create-user.dto';
 import { User } from '@/users/entities/user.entity';
 import { AuthResponse } from '@/auth/interfaces/auth-response.interface';
+import { UserRole } from '@/users/enums/user-role.enum';
+import type { JwtSignOptions } from '@nestjs/jwt';
 
 @Injectable()
 export class AuthService {
@@ -13,11 +16,17 @@ export class AuthService {
     private usersService: UsersService,
     private jwtService: JwtService,
     private hashUtil: HashUtil,
+    private configService: ConfigService,
   ) {}
 
   async register(createUserDto: CreateUserDto): Promise<AuthResponse> {
-    const user = await this.usersService.create(createUserDto);
-    return this.generateToken(user);
+    // Security: self-registration always creates a regular user.
+    // Admin accounts are provisioned by an admin (or the seed script).
+    const user = await this.usersService.create({
+      ...createUserDto,
+      role: UserRole.USER,
+    });
+    return this.generateTokens(user);
   }
 
   async login(loginDto: LoginDto): Promise<AuthResponse> {
@@ -36,13 +45,55 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    return this.generateToken(user);
+    return this.generateTokens(user);
   }
 
-  private generateToken(user: User): AuthResponse {
+  /**
+   * Exchange a valid refresh token for a new pair of tokens.
+   * The refresh token uses its own secret + expiry (JWT_REFRESH_*).
+   */
+  async refresh(refreshToken: string): Promise<AuthResponse> {
+    const secret = this.configService.get<string>('JWT_REFRESH_SECRET');
+    if (!secret) {
+      throw new Error(
+        'JWT_REFRESH_SECRET must be defined in environment variables',
+      );
+    }
+
+    let payload: { sub: number; role: UserRole };
+    try {
+      payload = await this.jwtService.verifyAsync(refreshToken, { secret });
+    } catch {
+      throw new UnauthorizedException('Invalid refresh token');
+    }
+
+    const user = await this.usersService.findById(payload.sub);
+    if (!user || !user.isActive) {
+      throw new UnauthorizedException('Account is inactive or does not exist');
+    }
+
+    return this.generateTokens(user);
+  }
+
+  private generateTokens(user: User): AuthResponse {
     const payload = { sub: user.id, role: user.role };
+
+    const refreshSecret = this.configService.get<string>('JWT_REFRESH_SECRET');
+    if (!refreshSecret) {
+      throw new Error(
+        'JWT_REFRESH_SECRET must be defined in environment variables',
+      );
+    }
+
     return {
       access_token: this.jwtService.sign(payload),
+      refresh_token: this.jwtService.sign(payload, {
+        secret: refreshSecret,
+        expiresIn: this.configService.get<string>(
+          'JWT_REFRESH_EXPIRES_IN',
+          '604800s',
+        ) as JwtSignOptions['expiresIn'],
+      }),
       user: {
         id: user.id,
         email: user.email,

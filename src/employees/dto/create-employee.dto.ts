@@ -76,4 +76,13 @@ export class CreateEmployeeDto {
   })
   @IsInt()
   departmentId: number;
+
+  @ApiPropertyOptional({
+    example: 2,
+    description:
+      'ID of the employee who manages this employee (must exist). Omit to clear.',
+  })
+  @IsOptional()
+  @IsInt()
+  managerId?: number;
 }

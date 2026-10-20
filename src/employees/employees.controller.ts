@@ -21,6 +21,7 @@ import {
   ApiConflictResponse,
   ApiBearerAuth,
   ApiForbiddenResponse,
+  ApiQuery,
 } from '@nestjs/swagger';
 import { EmployeesService } from '@/employees/employees.service';
 import { CreateEmployeeDto } from '@/employees/dto/create-employee.dto';
@@ -115,6 +116,33 @@ export class EmployeesController {
   @Get()
   findAll(@Paginate() query: PaginateQuery): Promise<Paginated<Employee>> {
     return this.employeesService.findAll(query);
+  }
+
+  @ApiOperation({
+    summary: "Get employee's subordinates (paginated)",
+    description:
+      'Returns all employees whose managerId is the given employee. Useful for team/org views.',
+  })
+  @ApiOkResponse({
+    description:
+      'Subordinates retrieved successfully. Returns paginated result with data, meta (pagination info), and links.',
+    type: Paginated<EmployeeDto>,
+  })
+  @ApiNotFoundResponse({ description: 'Manager (employee) not found' })
+  @ApiUnauthorizedResponse({ description: 'Not authenticated' })
+  @ApiQuery({
+    name: 'filter.isActive',
+    required: false,
+    type: Boolean,
+    description: 'Filter by active status (true/false)',
+  })
+  @Serialize(EmployeeDto)
+  @Get(':id/subordinates')
+  findSubordinates(
+    @Param('id', ParseIntPipe) id: number,
+    @Paginate() query: PaginateQuery,
+  ): Promise<Paginated<Employee>> {
+    return this.employeesService.findSubordinates(id, query);
   }
 
   @ApiOperation({ summary: 'Get employee with department details' })

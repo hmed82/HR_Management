@@ -26,9 +26,9 @@ A comprehensive RESTful API for managing human resources operations, built with 
 ### 🔐 Authentication & Authorization
 
 - JWT-based authentication
+- **Refresh tokens** (separate secret, `/auth/refresh`)
 - Role-based access control (Admin, User)
 - Public and protected routes
-- Refresh token support (configured)
 - Secure password hashing with bcrypt
 
 ### 👥 User Management
@@ -48,19 +48,27 @@ A comprehensive RESTful API for managing human resources operations, built with 
 
 - Complete employee lifecycle management
 - Employee profiles with detailed information
-- Manager-subordinate relationships
+- Manager-subordinate relationships (`managerId` + subordinates listing)
 - Department assignment
-- Employment status tracking (active, on_leave, terminated)
-- Salary and job title management
+- Active/inactive employment status
+- Aggregate statistics (total, active, per department)
+
+### ⏱️ Time Entries & Attendance
+
+- Daily clock in / clock out records per employee
+- Automatic data-quality status (`COMPLETE`, `INCOMPLETE`, `INVALID`)
+- Bulk import from Excel "pointeuse" files (transactional, per-row error report)
+- Downloadable Excel template
+- Date-range and per-employee listings, statistics
+- Bulk delete
 
 ### 📊 Advanced Features
 
-- **Pagination**: All list endpoints support pagination
-- **Filtering**: Filter employees by department, status
-- **Sorting**: Alphabetical and date-based sorting
+- **Pagination**: All list endpoints support pagination (nestjs-paginate)
+- **Filtering & sorting**: employees by department/status, time entries by date/status
 - **Validation**: Input validation with class-validator
 - **Serialization**: Response DTOs to hide sensitive data
-- **Swagger Documentation**: Interactive API documentation
+- **Swagger Documentation**: Interactive API documentation at `/api`
 
 ---
 
@@ -111,11 +119,19 @@ cp .env.example .env
 
 Edit `.env` with your configuration (see [Environment Variables](#environment-variables))
 
-### 4. Run database migrations (if using MySQL)
+### 4. Sync the database schema
 
 ```bash
 npm run migration:run
 ```
+
+### 5. Seed the first admin account (optional)
+
+```bash
+npm run seed
+```
+
+Default credentials: `admin@example.com` / `Admin1234!` (change them after first login).
 
 ---
 
@@ -266,8 +282,9 @@ src/
 #### Authentication
 
 ```http
-POST   /auth/register       # Register new user
+POST   /auth/register       # Register new user (self-registration always creates role "user")
 POST   /auth/login          # Login user
+POST   /auth/refresh        # Exchange refresh token for new tokens
 ```
 
 ---
@@ -285,8 +302,6 @@ GET    /auth/me             # Get current user info
 ```http
 GET    /users               # List all users (paginated)
 POST   /users               # Create user
-GET    /users/:id           # Get user by ID
-PATCH  /users/:id           # Update user
 DELETE /users/:id           # Delete user
 ```
 
@@ -294,30 +309,48 @@ DELETE /users/:id           # Delete user
 
 ```http
 GET    /users/me            # Get own profile
-PATCH  /users/:id           # Update own profile (if ID matches)
+GET    /users/:id           # Get user by ID (own profile allowed)
+PATCH  /users/:id           # Update (own: name+password only; admin: all fields)
 ```
 
 #### Departments
 
 ```http
 GET    /departments                    # List departments (paginated)
+GET    /departments/employee-count     # List with employee count (paginated)
 POST   /departments                    # Create department (Admin)
 GET    /departments/:id                # Get department
-GET    /departments/:id/employees      # Get department employees (paginated)
 PATCH  /departments/:id                # Update department (Admin)
-DELETE /departments/:id                # Delete department (Admin)
+DELETE /departments/:id                # Delete department (Admin, blocked if employees assigned)
 ```
 
 #### Employees
 
 ```http
-GET    /employees                      # List employees (paginated, filterable)
-POST   /employees                      # Create employee (Admin)
-GET    /employees/:id                  # Get employee
-GET    /employees/:id/subordinates     # Get employee's subordinates (paginated)
-PATCH  /employees/:id                  # Update employee (Admin)
-DELETE /employees/:id                  # Delete employee (Admin)
+GET    /employees                        # List employees (paginated, filterable)
+GET    /employees/stats/overview         # Aggregate statistics (Admin)
+POST   /employees                        # Create employee (Admin)
+GET    /employees/department/:id         # Get department employees (paginated)
+GET    /employees/:id                    # Get employee
+GET    /employees/:id/department         # Get employee with department object
+GET    /employees/:id/subordinates       # Get employee's subordinates (paginated)
+PATCH  /employees/:id                    # Update employee (Admin)
+DELETE /employees/:id                    # Delete employee (Admin)
 ```
+
+#### Time Entries
+
+```http
+GET    /time-entries                     # List all (paginated, filterable)
+GET    /time-entries/stats/overview      # Statistics by status (Admin)
+GET    /time-entries/export/template     # Download Excel template
+GET    /time-entries/date-range          # List by date range (paginated)
+GET    /time-entries/employee/:id        # List for one employee (paginated)
+POST   /time-entries                     # Create entry (Admin)
+POST   /time-entries/import/excel        # Bulk import from Excel (Admin, multipart)
+PUT    /time-entries/:id                 # Update entry (Admin)
+DELETE /time-entries/bulk                # Bulk delete by IDs (Admin)
+DELETE /time-entries/:id                 # Delete entry (Admin)
 
 ---
 
@@ -362,14 +395,27 @@ Content-Type: application/json
 }
 ```
 
-### 3. Use Token in Protected Endpoints
+### 3. Use the tokens in protected endpoints
 
-Add the token to the `Authorization` header:
+Add the access token to the `Authorization` header:
 
 ```bash
 GET /users
 Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 ```
+
+### 4. Refresh an expired access token
+
+```bash
+POST /auth/refresh
+Content-Type: application/json
+
+{
+  "refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+}
+```
+
+Returns a new `access_token` **and** a new `refresh_token`.
 
 ---
 
@@ -523,23 +569,26 @@ TypeOrmModule.forRootAsync({
 | POST /users                  | ✅    | ❌             |
 | GET /users                   | ✅    | ❌             |
 | GET /users/me                | ✅    | ✅             |
-| PATCH /users/:id (own)       | ✅    | ✅             |
+| PATCH /users/me          | ✅    | ✅ (name, password only) |
 | PATCH /users/:id (other)     | ✅    | ❌             |
 | DELETE /users/:id            | ✅    | ❌             |
 | All Department endpoints     | ✅    | ✅ (read-only) |
 | POST/PATCH/DELETE Department | ✅    | ❌             |
 | All Employee endpoints       | ✅    | ✅ (read-only) |
 | POST/PATCH/DELETE Employee   | ✅    | ❌             |
+| All Time Entry endpoints     | ✅    | ✅ (read-only) |
+| POST/PATCH/DELETE Time Entry, import, bulk delete | ✅ | ❌ |
 
 ---
 
 ## 🚧 Roadmap
 
-- [ ] Refresh token implementation
+- [x] Refresh token implementation
+- [x] Time entries / attendance tracking (manual + Excel import)
+- [x] Manager–subordinate structure
 - [ ] Password reset functionality
 - [ ] Email verification
 - [ ] Leave request management
-- [ ] Attendance tracking
 - [ ] Payroll module
 - [ ] Performance reviews
 - [ ] File upload (profile pictures, documents)
@@ -594,7 +643,6 @@ For support, email email@example.com or open an issue in the repository.
 ## 🐛 Known Issues
 
 - SQLite limitations with complex queries (use MySQL for production)
-- Swagger UI may require page refresh after first load
 - Pagination limit capped at 100 items per page
 
 ---

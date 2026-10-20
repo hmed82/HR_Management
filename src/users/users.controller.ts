@@ -25,7 +25,10 @@ import {
 } from '@nestjs/swagger';
 import { CreateUserDto } from '@/users/dto/create-user.dto';
 import { UsersService } from '@/users/users.service';
-import { UpdateUserDto } from '@/users/dto/update-user.dto';
+import {
+  UpdateUserDto,
+  UpdateUserByAdminDto,
+} from '@/users/dto/update-user.dto';
 import { UserDto } from '@/users/dto/user.dto';
 import { Serialize } from '@/common/interceptors/serialize.interceptor';
 import { UserRole } from '@/users/enums/user-role.enum';
@@ -116,12 +119,21 @@ export class UsersController {
   @ApiForbiddenResponse({ description: 'You can only update your own profile' })
   async update(
     @Param('id', ParseIntPipe) id: number,
-    @Body() updateUserDto: UpdateUserDto,
+    @Body() updateUserDto: UpdateUserByAdminDto,
     @CurrentUser() user: JwtUser,
   ): Promise<User> {
     // TODO: Create a custom guard/policy for this authorization logic instead of duplicating
-    if (user.role !== UserRole.ADMIN && user.id !== id) {
-      throw new ForbiddenException('You can only update your own profile');
+    if (user.role !== UserRole.ADMIN) {
+      // A regular user may only update their own profile, and only the
+      // fields whitelisted in UpdateUserDto (name, password) — sensitive
+      // fields such as role/isActive are dropped for non-admins.
+      if (user.id !== id) {
+        throw new ForbiddenException('You can only update your own profile');
+      }
+      const { role, isActive, ...self } = updateUserDto;
+      void role;
+      void isActive;
+      return this.usersService.update(id, self as UpdateUserDto);
     }
     return this.usersService.update(id, updateUserDto);
   }

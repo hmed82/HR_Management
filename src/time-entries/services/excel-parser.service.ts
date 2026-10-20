@@ -1,7 +1,6 @@
 import { Injectable, BadRequestException, Logger } from '@nestjs/common';
 import * as XLSX from 'xlsx';
 import { CreateTimeEntryDto } from '@/time-entries/dto/create-time-entry.dto';
-import { ParsedTimeEntry } from '@/time-entries/interfaces/parsed-time-entry.interface';
 
 @Injectable()
 export class ExcelParserService {
@@ -13,6 +12,7 @@ export class ExcelParserService {
    * | Employee ID | Date       | Clock In | Clock Out |
    * | 1           | 2025-10-22 | 08:30:00 | 17:30:00  |
    */
+  // eslint-disable-next-line @typescript-eslint/require-await
   async parseExcelFile(buffer: Buffer): Promise<CreateTimeEntryDto[]> {
     try {
       // Read the workbook from buffer
@@ -47,7 +47,7 @@ export class ExcelParserService {
         const rowNumber = i + 2; // +2 because Excel rows start at 1 and we have a header
 
         try {
-          const entry = this.parseRow(row, rowNumber);
+          const entry = this.parseRow(row);
           timeEntries.push(entry);
         } catch (error) {
           errors.push(`Row ${rowNumber}: ${error.message}`);
@@ -78,7 +78,7 @@ export class ExcelParserService {
   /**
    * Parse a single row from the Excel file
    */
-  private parseRow(row: any, rowNumber: number): CreateTimeEntryDto {
+  private parseRow(row: any): CreateTimeEntryDto {
     // Support multiple column name variations (case-insensitive)
     const employeeId = this.extractValue(row, [
       'Employee ID',
@@ -263,10 +263,11 @@ export class ExcelParserService {
    * Generate a template Excel file for HR to fill
    */
   generateTemplate(): Buffer {
+    const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
     const data = [
       {
         'Employee ID': 1,
-        Date: '2025-11-06',
+        Date: today,
         'Clock In': '09:00:00',
         'Clock Out': '17:30:00',
       },

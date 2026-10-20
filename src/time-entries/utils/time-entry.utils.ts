@@ -1,9 +1,29 @@
 import { TimeEntryStatus } from '@/time-entries/enum/time-entry-status.enum';
 
+// Convert an "HH:mm:ss" (or "HH:mm") time string into seconds since midnight.
+// Returns null when the value can't be parsed.
+function toSecondsOfDay(time: string): number | null {
+  const match = /^(\d{1,2}):(\d{2})(?::(\d{2}))?/.exec(time.trim());
+  if (!match) return null;
+
+  const h = Number(match[1]);
+  const m = Number(match[2]);
+  const s = Number(match[3] ?? 0);
+
+  if (h > 23 || m > 59 || s > 59) return null;
+  if (isNaN(h) || isNaN(m) || isNaN(s)) return null;
+
+  return h * 3600 + m * 60 + s;
+}
+
 // Determine status based on presence of clockIn & clockOut.
-// COMPLETE when both exist and non-empty;
-// INCOMPLETE when either is missing or empty.
-// INVALID when clockOut is earlier than or equal to clockIn or not a valid date.
+// COMPLETE when both exist and non-empty (and clockOut is after clockIn);
+// INCOMPLETE when either is missing or empty;
+// INVALID when clockOut is earlier than or equal to clockIn (or not a valid time).
+// NOTE: We deliberately compare clock times as "seconds since midnight" instead of
+// `new Date(clockIn)` because Node cannot safely parse a bare "HH:mm:ss" string
+// (`new Date('09:00:00')` returns Invalid Date), which used to mark valid
+// entries as INVALID.
 export function determineStatusFromClocks(
   clockIn?: string | null,
   clockOut?: string | null,
@@ -15,44 +35,12 @@ export function determineStatusFromClocks(
     return TimeEntryStatus.INCOMPLETE;
   }
 
-  const inTime = new Date(clockIn);
-  const outTime = new Date(clockOut);
+  const inSeconds = toSecondsOfDay(clockIn);
+  const outSeconds = toSecondsOfDay(clockOut);
 
-  if (
-    isNaN(inTime.getTime()) ||
-    isNaN(outTime.getTime()) ||
-    outTime <= inTime
-  ) {
+  if (inSeconds === null || outSeconds === null || outSeconds <= inSeconds) {
     return TimeEntryStatus.INVALID;
   }
 
   return TimeEntryStatus.COMPLETE;
-}
-
-// Normalize time strings read from Excel (accept e.g. "08:30", "8:30 AM", "08:30:00").
-// Returns HH:mm:ss or null if can't parse.
-export function normalizeTimeString(raw?: any): string | null {
-  if (!raw && raw !== 0) return null;
-  const s = String(raw).trim();
-
-  // If already HH:mm:ss or HH:mm, try to normalize
-  const hhmmss = /^([0-1]?[0-9]|2[0-3]):([0-5][0-9])(:([0-5][0-9]))?$/;
-  if (hhmmss.test(s)) {
-    const parts = s.split(':');
-    const hh = parts[0].padStart(2, '0');
-    const mm = parts[1].padStart(2, '0');
-    const ss = parts[2] ? parts[2].padStart(2, '0') : '00';
-    return `${hh}:${mm}:${ss}`;
-  }
-
-  // Try Date parse (Excel may export times as numbers or dates)
-  const maybeDate = new Date(s);
-  if (!isNaN(maybeDate.getTime())) {
-    const hh = String(maybeDate.getHours()).padStart(2, '0');
-    const mm = String(maybeDate.getMinutes()).padStart(2, '0');
-    const ss = String(maybeDate.getSeconds()).padStart(2, '0');
-    return `${hh}:${mm}:${ss}`;
-  }
-
-  return null;
 }

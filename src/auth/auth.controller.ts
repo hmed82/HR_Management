@@ -2,15 +2,18 @@ import { Controller, Post, Body, Get } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
+  ApiCreatedResponse,
   ApiOkResponse,
-  ApiResponse,
   ApiBadRequestResponse,
   ApiUnauthorizedResponse,
   ApiConflictResponse,
   ApiBearerAuth,
+  ApiBody,
 } from '@nestjs/swagger';
 import { AuthService } from '@/auth/auth.service';
 import { LoginDto } from '@/auth/dto/login.dto';
+import { RefreshTokenDto } from '@/auth/dto/refresh-token.dto';
+import { AuthResponseDto } from '@/auth/dto/auth-response.dto';
 import { CreateUserDto } from '@/users/dto/create-user.dto';
 import { UserDto } from '@/users/dto/user.dto';
 import { Public } from '@/auth/decorators/public.decorator';
@@ -33,10 +36,10 @@ export class AuthController {
   @Public()
   @Post('register')
   @ApiOperation({ summary: 'Register a new user' })
-  @ApiResponse({
-    status: 201,
-    description: 'User successfully registered',
-    type: UserDto,
+  @ApiCreatedResponse({
+    description:
+      'User successfully registered. Returns access token, refresh token and user info.',
+    type: AuthResponseDto,
   })
   @ApiBadRequestResponse({ description: 'Invalid input data' })
   @ApiConflictResponse({ description: 'Email already in use' })
@@ -47,11 +50,34 @@ export class AuthController {
   @Public()
   @Post('login')
   @ApiOperation({ summary: 'Login user' })
-  @ApiOkResponse({ description: 'User successfully logged in' })
+  @ApiOkResponse({
+    description:
+      'User successfully logged in. Returns access token, refresh token and user info.',
+    type: AuthResponseDto,
+  })
   @ApiBadRequestResponse({ description: 'Invalid input data' })
   @ApiUnauthorizedResponse({ description: 'Invalid email or password' })
   async login(@Body() loginDto: LoginDto): Promise<AuthResponse> {
     return this.authService.login(loginDto);
+  }
+
+  @Public()
+  @Post('refresh')
+  @ApiOperation({
+    summary: 'Refresh tokens',
+    description:
+      'Exchange a valid refresh token for a new access token (and a new refresh token).',
+  })
+  @ApiBody({ type: RefreshTokenDto })
+  @ApiOkResponse({
+    description: 'New tokens generated',
+    type: AuthResponseDto,
+  })
+  @ApiUnauthorizedResponse({ description: 'Invalid refresh token' })
+  async refresh(
+    @Body() refreshTokenDto: RefreshTokenDto,
+  ): Promise<AuthResponse> {
+    return this.authService.refresh(refreshTokenDto.refresh_token);
   }
 
   // Current user can access their own info
@@ -64,7 +90,7 @@ export class AuthController {
     type: UserDto,
   })
   @ApiUnauthorizedResponse({ description: 'Not authenticated' })
-  async getMe(@CurrentUser() user: JwtUser): Promise<User | null> {
+  async getMe(@CurrentUser() user: JwtUser): Promise<User> {
     return this.usersService.findById(user.id);
   }
 }

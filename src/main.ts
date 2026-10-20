@@ -20,10 +20,13 @@ async function bootstrap() {
     .addTag('Users', 'User CRUD')
     .addTag('Departments', 'Operations related to departments')
     .addTag('Employees', 'Operations related to employee records')
+    .addTag('Time Entries', 'Time tracking, Excel import/export & statistics')
     .build();
 
   const documentFactory = () => SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api', app, documentFactory);
+  SwaggerModule.setup('api', app, documentFactory, {
+    swaggerOptions: { persistAuthorization: true },
+  });
 
   app.useGlobalPipes(
     new ValidationPipe({
@@ -38,14 +41,17 @@ async function bootstrap() {
   // app.useGlobalInterceptors(new ClassSerializerInterceptor(app.get(Reflector)));//global interceptor i used before createing my own SerializeInterceptor
 
   // Enable CORS with options from environment variables or defaults
-
-  // app.enableCors({
-  //   origin: configService.get<string>('CORS_ORIGIN') ?? 'http://localhost:3000',
-  //   methods: configService.get<string>('CORS_METHODS') ?? 'GET,HEAD,PUT,PATCH,POST,DELETE',
-  //   allowedHeaders: configService.get<string>('CORS_ALLOWED_HEADERS') ?? 'Content-Type,Accept,Authorization',
-  //   credentials: configService.get<boolean>('CORS_CREDENTIALS') ?? true,
-  //   maxAge: Number(configService.get<number>('CORS_MAX_AGE')) ?? 3600,
-  // });
+  app.enableCors({
+    origin: configService.get<string>('CORS_ORIGIN') ?? '*',
+    methods:
+      configService.get<string>('CORS_METHODS') ??
+      'GET,HEAD,PUT,PATCH,POST,DELETE',
+    allowedHeaders:
+      configService.get<string>('CORS_ALLOWED_HEADERS') ??
+      'Content-Type,Accept,Authorization',
+    credentials: configService.get<boolean>('CORS_CREDENTIALS') ?? true,
+    maxAge: configService.get<number>('CORS_MAX_AGE') ?? 3600,
+  });
 
   const port = Number(configService.get<number>('PORT'));
   if (port) {

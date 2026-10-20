@@ -7,8 +7,8 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
 } from 'typeorm';
-import { Employee } from '@/employees/entities/employee.entity';
-import { TimeEntryStatus } from '@/time-entries/enum/time-entry-status.enum';
+import { Employee } from '../../employees/entities/employee.entity';
+import { TimeEntryStatus } from '../../time-entries/enum/time-entry-status.enum';
 
 @Entity('time_entries')
 export class TimeEntry {

@@ -61,7 +61,8 @@ import { TimeEntriesModule } from '@/time-entries/time-entries.module';
       // database: 'db.sqlite',
       database: join(__dirname, '..', 'db.sqlite'), // Store in a data directory
       entities: [__dirname + '/**/*.entity{.ts,.js}'],
-      synchronize: true,
+      // synchronize: true,
+      synchronize: false,
       logging: true,
     }),
     // ************************** end SQLite config **************************

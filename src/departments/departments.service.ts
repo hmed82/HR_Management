@@ -117,21 +117,6 @@ export class DepartmentsService {
     return department;
   }
 
-  // // Alternative with explicit type if you want to expose employeeCount in the type
-  // async findAllWithEmployeeCount1(): Promise<Array<Department & { employeeCount: number }>> {
-  //   return this.departmentsRepo
-  //     .createQueryBuilder('dept')
-  //     .loadRelationCountAndMap('dept.employeeCount', 'dept.employees')
-  //     .getMany() as Promise<Array<Department & { employeeCount: number }>>;
-  // }
-
-  async findAllWithEmployeeCount1(): Promise<Department[]> {
-    return this.departmentsRepo
-      .createQueryBuilder('dept')
-      .loadRelationCountAndMap('dept.employeeCount', 'dept.employees')
-      .getMany();
-  }
-
   async findAllWithEmployeeCount(
     query: PaginateQuery,
   ): Promise<Paginated<Department>> {

@@ -6,7 +6,7 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
 } from 'typeorm';
-import { UserRole } from '@/users/enums/user-role.enum';
+import { UserRole } from '../enums/user-role.enum';
 
 @Entity('users') // good practice: plural table name
 export class User {
@@ -22,6 +22,9 @@ export class User {
 
   @Column({ nullable: true })
   name?: string;
+
+  @Column({ nullable: true })
+  phoneNumber?: string;
 
   @Column({ type: 'boolean', default: true })
   isActive: boolean;

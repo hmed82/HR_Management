@@ -17,6 +17,29 @@ class SimpleDepartmentDto {
   name: string;
 }
 
+class SimpleManagerDto {
+  @Expose()
+  @ApiProperty({
+    example: 2,
+    description: "Manager's unique identifier (employee ID)",
+  })
+  id: number;
+
+  @Expose()
+  @ApiProperty({
+    example: 'Jane',
+    description: "Manager's first name",
+  })
+  firstName: string;
+
+  @Expose()
+  @ApiProperty({
+    example: 'Smith',
+    description: "Manager's last name",
+  })
+  lastName: string;
+}
+
 // class SimpleManagerDto {
 //     @Expose()
 //   @ApiProperty({
@@ -115,16 +138,22 @@ export class EmployeeDto {
   @Expose()
   isActive: boolean;
 
-  // ************** i will add this functionality late **************
-  // @Expose()
-  // @ApiProperty()
-  // managerId: number;
+  @Expose()
+  @ApiProperty({
+    example: 9,
+    description: 'ID of the employee who manages this employee',
+    required: false,
+  })
+  managerId?: number;
 
-  // @Expose()
-  // @Type(() => SimpleManagerDto)
-  // @ApiProperty({ type: SimpleManagerDto, required: false })
-  // manager: SimpleManagerDto;
-  // ****************************************************************
+  @Expose()
+  @Type(() => SimpleManagerDto)
+  @ApiProperty({
+    description: 'Basic info about the manager (id, firstName, lastName)',
+    type: SimpleManagerDto,
+    required: false,
+  })
+  manager?: SimpleManagerDto;
 
   @Expose()
   @ApiProperty({

@@ -8,8 +8,8 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
 } from 'typeorm';
-import { Department } from '@/departments/entities/department.entity';
-import { TimeEntry } from '@/time-entries/entities/time-entry.entity';
+import { Department } from '../../departments/entities/department.entity';
+import { TimeEntry } from '../../time-entries/entities/time-entry.entity';
 
 @Entity('employees')
 export class Employee {
@@ -44,6 +44,22 @@ export class Employee {
   // For easier access
   @Column({ nullable: true })
   departmentId: number;
+
+  // Relationship: Employee reports to a manager (self-referential)
+  @ManyToOne(() => Employee, (employee) => employee.subordinates, {
+    nullable: true,
+    onDelete: 'SET NULL',
+  })
+  @JoinColumn({ name: 'managerId' })
+  manager?: Employee;
+
+  // For easier access / queries
+  @Column({ type: 'integer', nullable: true })
+  managerId?: number;
+
+  // Relationship: Employees managed by this employee
+  @OneToMany(() => Employee, (employee) => employee.manager)
+  subordinates: Employee[];
 
   // Relationship: Employee can have multiple time entries
   @OneToMany(() => TimeEntry, (timeEntry) => timeEntry.employee)
