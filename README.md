@@ -74,7 +74,7 @@ A comprehensive RESTful API for managing human resources operations, built with 
 
 ## 🛠️ Tech Stack
 
-- **Framework**: [NestJS](https://nestjs.com/) v10+
+- **Framework**: [NestJS](https://nestjs.com/) v11
 - **Language**: TypeScript
 - **Database**: SQLite (development) / MySQL (production)
 - **ORM**: [TypeORM](https://typeorm.io/)
@@ -351,8 +351,9 @@ POST   /time-entries/import/excel        # Bulk import from Excel (Admin, multip
 PUT    /time-entries/:id                 # Update entry (Admin)
 DELETE /time-entries/bulk                # Bulk delete by IDs (Admin)
 DELETE /time-entries/:id                 # Delete entry (Admin)
+```
 
----
+> 📘 Full details (payloads, query params, error codes) in **[docs/API_ENDPOINTS.md](docs/API_ENDPOINTS.md)**.
 
 ## 🔐 Authentication
 
@@ -363,12 +364,13 @@ POST /auth/register
 Content-Type: application/json
 
 {
-  "email": "admin@example.com",
+  "email": "user@example.com",
   "password": "SecurePass123!",
-  "name": "Admin User",
-  "role": "admin"
+  "name": "New User"
 }
 ```
+
+> Self-registration always creates a `user` role account. To create an `admin`, log in as an admin and use `POST /users`.
 
 ### 2. Login
 
@@ -569,7 +571,7 @@ TypeOrmModule.forRootAsync({
 | POST /users                  | ✅    | ❌             |
 | GET /users                   | ✅    | ❌             |
 | GET /users/me                | ✅    | ✅             |
-| PATCH /users/me          | ✅    | ✅ (name, password only) |
+| PATCH /users/:id (self)      | ✅    | ✅ (name, password only) |
 | PATCH /users/:id (other)     | ✅    | ❌             |
 | DELETE /users/:id            | ✅    | ❌             |
 | All Department endpoints     | ✅    | ✅ (read-only) |
